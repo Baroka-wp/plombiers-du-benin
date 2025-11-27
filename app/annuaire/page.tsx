@@ -50,8 +50,9 @@ export default function AnnuairePage() {
         setLoading(true);
         setError(null);
         try {
+            const searchParam = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : '';
             const response = await fetch(
-                `/api/plumbers?page=${page}&limit=10&sortBy=${sortBy}&sortOrder=${sortOrder}`,
+                `/api/plumbers?page=${page}&limit=10&sortBy=${sortBy}&sortOrder=${sortOrder}${searchParam}`,
                 { signal: abortSignal }
             );
             
@@ -82,7 +83,7 @@ export default function AnnuairePage() {
             } else {
                 setError("Une erreur inattendue est survenue.");
             }
-            console.error("Error fetching plumbers:", error);
+            // Error is already handled and displayed to user, no need to log client-side
         } finally {
             setLoading(false);
         }
@@ -95,7 +96,7 @@ export default function AnnuairePage() {
         return () => {
             abortController.abort();
         };
-    }, [sortBy, sortOrder]);
+    }, [sortBy, sortOrder, searchTerm]);
 
     const handlePageChange = (newPage: number) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -104,12 +105,8 @@ export default function AnnuairePage() {
         }
     };
 
-    const filteredPlumbers = plumbers.filter((plumber) => {
-        const fullName = `${plumber.nom} ${plumber.prenom}`.toLowerCase();
-        const location = `${plumber.ville} ${plumber.departement}`.toLowerCase();
-        const search = searchTerm.toLowerCase();
-        return fullName.includes(search) || location.includes(search);
-    });
+    // Search is now handled server-side, so we use plumbers directly
+    const filteredPlumbers = plumbers;
 
     return (
         <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">

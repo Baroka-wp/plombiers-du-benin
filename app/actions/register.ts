@@ -4,13 +4,21 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { sanitizeString, sanitizeText, sanitizeUrl, sanitizePhone } from "@/lib/sanitize";
+import { logger } from "@/lib/logger";
 
 // Validation téléphone béninois: 8 chiffres commençant par 90-99
 const beninPhoneRegex = /^(9[0-9])\d{6}$/;
 
 const RegisterSchema = z.object({
-    nom: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
-    prenom: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
+    nom: z.string()
+        .min(2, "Le nom doit contenir au moins 2 caractères")
+        .max(100, "Le nom ne peut pas dépasser 100 caractères")
+        .refine((val) => /^[a-zA-ZÀ-ÿ\s'-]+$/.test(val), "Le nom ne peut contenir que des lettres"),
+    prenom: z.string()
+        .min(2, "Le prénom doit contenir au moins 2 caractères")
+        .max(100, "Le prénom ne peut pas dépasser 100 caractères")
+        .refine((val) => /^[a-zA-ZÀ-ÿ\s'-]+$/.test(val), "Le prénom ne peut contenir que des lettres"),
     telephone: z.string()
         .regex(beninPhoneRegex, "Le numéro de téléphone doit être un numéro béninois valide (8 chiffres commençant par 90-99)")
         .refine((val) => {
@@ -18,12 +26,20 @@ const RegisterSchema = z.object({
             const cleaned = val.replace(/\s+/g, '');
             return cleaned.length === 8 && beninPhoneRegex.test(cleaned);
         }, "Format invalide. Exemple: 97000000"),
-    departement: z.string().min(1, "Le département est requis"),
-    ville: z.string().min(1, "La ville est requise"),
-    quartier: z.string().min(1, "Le quartier est requis"),
-    adresse: z.string().optional(),
+    departement: z.string()
+        .min(1, "Le département est requis")
+        .max(100, "Le département ne peut pas dépasser 100 caractères"),
+    ville: z.string()
+        .min(1, "La ville est requise")
+        .max(100, "La ville ne peut pas dépasser 100 caractères"),
+    quartier: z.string()
+        .min(1, "Le quartier est requis")
+        .max(100, "Le quartier ne peut pas dépasser 100 caractères"),
+    adresse: z.string()
+        .max(200, "L'adresse ne peut pas dépasser 200 caractères")
+        .optional(),
     diplomeAnnee: z.coerce.number().min(1950).max(new Date().getFullYear()),
-    diplomeFileUrl: z.string().url("L'URL du diplôme est invalide"),
+    diplomeFileUrl: z.string().min(1, "Le fichier du diplôme est requis"),
 });
 
 import { PlumberFormData } from "@/types/plumber";
@@ -38,16 +54,20 @@ export type RegisterState = {
 };
 
 export async function registerPlumber(prevState: RegisterState, formData: FormData) {
+    // Récupérer le fichier
+    const diplomeFile = formData.get("diplomeFile") as File | null;
+
+    // Sanitize all inputs before validation
     const rawData = {
-        nom: formData.get("nom"),
-        prenom: formData.get("prenom"),
-        telephone: formData.get("telephone"),
-        departement: formData.get("departement"),
-        ville: formData.get("ville"),
-        quartier: formData.get("quartier"),
-        adresse: formData.get("adresse"),
+        nom: sanitizeString(formData.get("nom")),
+        prenom: sanitizeString(formData.get("prenom")),
+        telephone: sanitizePhone(formData.get("telephone")),
+        departement: sanitizeString(formData.get("departement")),
+        ville: sanitizeString(formData.get("ville")),
+        quartier: sanitizeString(formData.get("quartier")),
+        adresse: sanitizeText(formData.get("adresse") || undefined),
         diplomeAnnee: formData.get("diplomeAnnee"),
-        diplomeFileUrl: formData.get("diplomeFileUrl"),
+        diplomeFileUrl: diplomeFile ? "temp" : "", // Temporaire pour la validation
     };
 
     const validatedFields = RegisterSchema.safeParse(rawData);
@@ -63,15 +83,39 @@ export async function registerPlumber(prevState: RegisterState, formData: FormDa
 
     const {
         nom, prenom, telephone: rawTelephone, departement, ville, quartier, adresse,
-        diplomeAnnee, diplomeFileUrl
+        diplomeAnnee
     } = validatedFields.data;
 
     // Nettoyer le numéro de téléphone (enlever espaces, etc.)
     const telephone = rawTelephone.replace(/\s+/g, '');
 
     let plumberId: string | null = null;
+    let diplomaUrl = "";
 
     try {
+        // Upload du diplôme vers Cloudinary si un fichier est fourni
+        if (diplomeFile) {
+            const uploadFormData = new FormData();
+            uploadFormData.append("file", diplomeFile);
+
+            const uploadResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/upload`, {
+                method: "POST",
+                body: uploadFormData,
+            });
+
+            if (!uploadResponse.ok) {
+                throw new Error("Erreur lors de l'upload du diplôme");
+            }
+
+            const uploadData = await uploadResponse.json();
+            diplomaUrl = uploadData.url;
+        } else {
+            return {
+                message: "Veuillez sélectionner un fichier pour votre diplôme.",
+                success: false,
+                payload: rawData,
+            };
+        }
         // Check if phone already exists
         const existingPlumber = await prisma.plumber.findUnique({
             where: { telephone },
@@ -95,7 +139,7 @@ export async function registerPlumber(prevState: RegisterState, formData: FormDa
                 quartier,
                 adresse: adresse || null,
                 diplomeAnnee,
-                diplomeFileUrl,
+                diplomeFileUrl: diplomaUrl,
             },
         });
 
@@ -103,7 +147,11 @@ export async function registerPlumber(prevState: RegisterState, formData: FormDa
         revalidatePath("/annuaire");
 
     } catch (error) {
-        console.error("Registration error:", error);
+        logger.error("Registration error", error instanceof Error ? error : new Error(String(error)), {
+            telephone: rawTelephone,
+            departement,
+            ville,
+        });
         return {
             message: "Une erreur est survenue lors de l'inscription. Veuillez réessayer.",
             success: false,

@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { logger } from "@/lib/logger";
 
 export async function getPlumber(id: string) {
     try {
@@ -10,7 +11,7 @@ export async function getPlumber(id: string) {
         });
         return plumber;
     } catch (error) {
-        console.error("Error fetching plumber:", error);
+        logger.error("Error fetching plumber", error instanceof Error ? error : new Error(String(error)), { plumberId: id });
         return null;
     }
 }
@@ -24,7 +25,7 @@ export async function updatePlumberPhoto(id: string, photoUrl: string) {
         revalidatePath(`/badge/${id}`);
         return { success: true };
     } catch (error) {
-        console.error("Error updating photo:", error);
+        logger.error("Error updating photo", error instanceof Error ? error : new Error(String(error)), { plumberId: id, photoUrl });
         return { success: false, error: "Failed to update photo" };
     }
 }
