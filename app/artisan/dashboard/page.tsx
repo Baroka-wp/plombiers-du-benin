@@ -292,7 +292,7 @@ export default function ArtisanDashboard() {
                           onChange={(e) =>
                             setEditForm({ ...editForm, nom: e.target.value })
                           }
-                          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
+                          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 bg-white"
                         />
                       </div>
                       <div>
@@ -305,7 +305,7 @@ export default function ArtisanDashboard() {
                           onChange={(e) =>
                             setEditForm({ ...editForm, prenom: e.target.value })
                           }
-                          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
+                          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 bg-white"
                         />
                       </div>
                     </div>
@@ -324,7 +324,7 @@ export default function ArtisanDashboard() {
                               ville: "",
                             })
                           }
-                          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
+                          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 bg-white"
                         >
                           {Object.keys(LOCATIONS)
                             .sort()
@@ -344,7 +344,7 @@ export default function ArtisanDashboard() {
                           onChange={(e) =>
                             setEditForm({ ...editForm, ville: e.target.value })
                           }
-                          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
+                          className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 bg-white"
                         >
                           {LOCATIONS[editForm.departement]?.sort().map((ville) => (
                             <option key={ville} value={ville}>
@@ -365,7 +365,7 @@ export default function ArtisanDashboard() {
                         onChange={(e) =>
                           setEditForm({ ...editForm, quartier: e.target.value })
                         }
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none"
+                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 bg-white"
                       />
                     </div>
                   </>

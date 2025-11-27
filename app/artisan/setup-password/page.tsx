@@ -131,7 +131,7 @@ export default function SetupPasswordPage() {
                   onChange={(e) => setTelephone(e.target.value)}
                   placeholder="97 00 00 00"
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition text-gray-900 placeholder:text-gray-400"
                 />
               </div>
               <p className="text-xs text-gray-500">
@@ -153,7 +153,7 @@ export default function SetupPasswordPage() {
                   placeholder="••••••••"
                   required
                   minLength={6}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition text-gray-900 placeholder:text-gray-400"
                 />
                 <button
                   type="button"
@@ -185,7 +185,7 @@ export default function SetupPasswordPage() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition text-gray-900 placeholder:text-gray-400"
                 />
                 <button
                   type="button"

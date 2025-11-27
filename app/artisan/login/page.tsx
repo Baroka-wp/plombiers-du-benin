@@ -93,7 +93,7 @@ export default function ArtisanLoginPage() {
                   onChange={(e) => setTelephone(e.target.value)}
                   placeholder="97 00 00 00"
                   required
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition text-gray-900 placeholder:text-gray-400"
                 />
               </div>
             </div>
@@ -111,7 +111,7 @@ export default function ArtisanLoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition text-gray-900 placeholder:text-gray-400"
                 />
                 <button
                   type="button"
