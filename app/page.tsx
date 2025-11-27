@@ -1,7 +1,25 @@
-import React from 'react';
+"use client";
+
+import React, { useState } from 'react';
 import { Search, Shield, CheckCircle, MapPin, QrCode, Phone } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function LandingPage() {
+  const router = useRouter();
+  const [departement, setDepartement] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const params = new URLSearchParams();
+    if (departement) params.append('departement', departement);
+    if (searchTerm) params.append('search', searchTerm);
+    
+    const queryString = params.toString();
+    router.push(`/annuaire${queryString ? `?${queryString}` : ''}`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900 font-sans">
       {/* --- Hero Section (Drapeau stylisé en fond) --- */}
@@ -27,30 +45,46 @@ export default function LandingPage() {
           </p>
 
           {/* Barre de recherche rapide */}
-          <div className="w-full max-w-4xl bg-white p-2 rounded-2xl shadow-2xl flex flex-col md:flex-row gap-2 text-left">
+          <form onSubmit={handleSearch} className="w-full max-w-4xl bg-white p-2 rounded-2xl shadow-2xl flex flex-col md:flex-row gap-2 text-left">
             <div className="flex-1 relative">
               <MapPin className="absolute left-4 top-3.5 text-gray-400" size={20} />
-              <select className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500 text-gray-700 font-medium h-full appearance-none">
-                <option value="">Département</option>
-                <option value="Littoral">Littoral (Cotonou)</option>
-                <option value="Atlantique">Atlantique (Calavi...)</option>
-                <option value="Ouémé">Ouémé (Porto-Novo...)</option>
-                <option value="Borgou">Borgou (Parakou...)</option>
-                <option value="Zou">Zou (Bohicon...)</option>
+              <select 
+                value={departement}
+                onChange={(e) => setDepartement(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500 text-gray-700 font-medium h-full appearance-none"
+              >
+                <option value="">Tous les départements</option>
+                <option value="Alibori">Alibori</option>
+                <option value="Atacora">Atacora</option>
+                <option value="Atlantique">Atlantique</option>
+                <option value="Borgou">Borgou</option>
+                <option value="Collines">Collines</option>
+                <option value="Couffo">Couffo</option>
+                <option value="Donga">Donga</option>
+                <option value="Littoral">Littoral</option>
+                <option value="Mono">Mono</option>
+                <option value="Ouémé">Ouémé</option>
+                <option value="Plateau">Plateau</option>
+                <option value="Zou">Zou</option>
               </select>
             </div>
             <div className="flex-[2] relative">
               <Search className="absolute left-4 top-3.5 text-gray-400" size={20} />
               <input
                 type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Ville, quartier ou nom..."
                 className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500 text-gray-900 placeholder-gray-500 h-full"
               />
             </div>
-            <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-bold text-lg transition shadow-lg w-full md:w-auto">
+            <button 
+              type="submit"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-bold text-lg transition shadow-lg w-full md:w-auto"
+            >
               Rechercher
             </button>
-          </div>
+          </form>
 
           <div className="mt-8 flex flex-col md:flex-row items-center gap-4 md:gap-6 text-emerald-200 text-sm">
             <span className="flex items-center gap-2"><CheckCircle size={16} className="text-yellow-400" /> Identité Vérifiée</span>

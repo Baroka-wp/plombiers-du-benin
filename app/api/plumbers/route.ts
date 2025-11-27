@@ -42,21 +42,29 @@ export async function GET(request: NextRequest) {
         const sortBy = searchParams.get('sortBy') || 'createdAt';
         const sortOrder = searchParams.get('sortOrder') || 'desc';
         const search = searchParams.get('search') || '';
+        const departement = searchParams.get('departement') || '';
         const skip = (page - 1) * limit;
 
         // Build where clause for search filtering
         // Note: PostgreSQL supports case-insensitive search with mode: 'insensitive'
-        const whereClause = search
-            ? {
-                OR: [
-                    { nom: { contains: search, mode: 'insensitive' as const } },
-                    { prenom: { contains: search, mode: 'insensitive' as const } },
-                    { ville: { contains: search, mode: 'insensitive' as const } },
-                    { departement: { contains: search, mode: 'insensitive' as const } },
-                    { quartier: { contains: search, mode: 'insensitive' as const } },
-                ],
-            }
-            : {};
+        const whereConditions: any = {};
+        
+        // Search filter (nom, prenom, ville, quartier)
+        if (search) {
+            whereConditions.OR = [
+                { nom: { contains: search, mode: 'insensitive' as const } },
+                { prenom: { contains: search, mode: 'insensitive' as const } },
+                { ville: { contains: search, mode: 'insensitive' as const } },
+                { quartier: { contains: search, mode: 'insensitive' as const } },
+            ];
+        }
+        
+        // Department filter
+        if (departement) {
+            whereConditions.departement = { equals: departement };
+        }
+        
+        const whereClause = Object.keys(whereConditions).length > 0 ? whereConditions : {};
 
         // Build orderBy object based on sortBy parameter
         let orderBy: Record<string, "asc" | "desc"> = {};

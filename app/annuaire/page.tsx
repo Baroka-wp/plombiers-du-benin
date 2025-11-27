@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Search, Star, MapPin, Phone, CheckCircle, XCircle, ChevronLeft, ChevronRight, Grid, List, SlidersHorizontal } from "lucide-react";
 import Image from "next/image";
 
@@ -134,6 +135,7 @@ const CardSkeleton = () => (
 );
 
 export default function AnnuairePage() {
+    const searchParams = useSearchParams();
     const [plumbers, setPlumbers] = useState<Plumber[]>([]);
     const [pagination, setPagination] = useState<PaginationData>({
         page: 1,
@@ -143,7 +145,8 @@ export default function AnnuairePage() {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [searchTerm, setSearchTerm] = useState("");
+    const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || "");
+    const [departementFilter, setDepartementFilter] = useState(searchParams.get('departement') || "");
     const [viewMode, setViewMode] = useState<ViewMode>('table');
     const [sortBy, setSortBy] = useState<SortBy>('createdAt');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
@@ -153,8 +156,9 @@ export default function AnnuairePage() {
         setError(null);
         try {
             const searchParam = searchTerm ? `&search=${encodeURIComponent(searchTerm)}` : '';
+            const departementParam = departementFilter ? `&departement=${encodeURIComponent(departementFilter)}` : '';
             const response = await fetch(
-                `/api/plumbers?page=${page}&limit=10&sortBy=${sortBy}&sortOrder=${sortOrder}${searchParam}`,
+                `/api/plumbers?page=${page}&limit=10&sortBy=${sortBy}&sortOrder=${sortOrder}${searchParam}${departementParam}`,
                 { signal: abortSignal }
             );
             
@@ -198,7 +202,7 @@ export default function AnnuairePage() {
         return () => {
             abortController.abort();
         };
-    }, [sortBy, sortOrder, searchTerm]);
+    }, [sortBy, sortOrder, searchTerm, departementFilter]);
 
     const handlePageChange = (newPage: number) => {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -225,16 +229,40 @@ export default function AnnuairePage() {
 
                 {/* Search and Filters */}
                 <div className="mb-6 space-y-4">
-                    {/* Search Bar */}
-                    <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-                        <input
-                            type="text"
-                            placeholder="Rechercher par nom ou localité..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#008751] focus:border-transparent outline-none transition-all text-slate-900 placeholder:text-slate-400"
-                        />
+                    {/* Search Bar and Department Filter */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="relative md:col-span-2">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                            <input
+                                type="text"
+                                placeholder="Rechercher par nom, ville ou quartier..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#008751] focus:border-transparent outline-none transition-all text-slate-900 placeholder:text-slate-400"
+                            />
+                        </div>
+                        <div className="relative">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                            <select
+                                value={departementFilter}
+                                onChange={(e) => setDepartementFilter(e.target.value)}
+                                className="w-full pl-12 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#008751] focus:border-transparent outline-none transition-all text-slate-900 bg-white appearance-none"
+                            >
+                                <option value="">Tous les départements</option>
+                                <option value="Alibori">Alibori</option>
+                                <option value="Atacora">Atacora</option>
+                                <option value="Atlantique">Atlantique</option>
+                                <option value="Borgou">Borgou</option>
+                                <option value="Collines">Collines</option>
+                                <option value="Couffo">Couffo</option>
+                                <option value="Donga">Donga</option>
+                                <option value="Littoral">Littoral</option>
+                                <option value="Mono">Mono</option>
+                                <option value="Ouémé">Ouémé</option>
+                                <option value="Plateau">Plateau</option>
+                                <option value="Zou">Zou</option>
+                            </select>
+                        </div>
                     </div>
 
                     {/* Filters and View Toggle */}
