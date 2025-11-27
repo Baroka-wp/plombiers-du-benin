@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Star, MapPin, Phone, CheckCircle, XCircle, ChevronLeft, ChevronRight, Grid, List, SlidersHorizontal } from "lucide-react";
+import { Search, Star, MapPin, Phone, CheckCircle, XCircle, ChevronLeft, ChevronRight, Grid, List, SlidersHorizontal, MessageSquare } from "lucide-react";
 import Image from "next/image";
 
 interface Plumber {
@@ -362,7 +362,7 @@ export default function AnnuairePage() {
                                             Note
                                         </th>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                                            Contact
+                                            Action
                                         </th>
                                         <th className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                                             Statut
@@ -429,15 +429,13 @@ export default function AnnuairePage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2">
-                                                    <Phone className="w-4 h-4 text-slate-400" />
-                                                    <a
-                                                        href={`tel:${plumber.telephone}`}
-                                                        className="text-[#008751] hover:text-[#006b40] font-medium transition-colors"
-                                                    >
-                                                        {plumber.telephone}
-                                                    </a>
-                                                </div>
+                                                <a
+                                                    href={`sms:${plumber.telephone}?body=Bonjour ${plumber.prenom}, je souhaite faire appel à vos services de plomberie.`}
+                                                    className="inline-flex items-center gap-2 bg-[#008751] hover:bg-[#006b40] text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                                                >
+                                                    <MessageSquare className="w-4 h-4" />
+                                                    Contacter
+                                                </a>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col gap-1">
@@ -524,14 +522,14 @@ export default function AnnuairePage() {
                                         </div>
                                     </div>
 
-                                    {/* Contact */}
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <Phone className="w-4 h-4 text-slate-400" />
+                                    {/* Contact Button */}
+                                    <div className="mb-4">
                                         <a
-                                            href={`tel:${plumber.telephone}`}
-                                            className="text-[#008751] hover:text-[#006b40] font-medium transition-colors"
+                                            href={`sms:${plumber.telephone}?body=Bonjour ${plumber.prenom}, je souhaite faire appel à vos services de plomberie.`}
+                                            className="flex items-center justify-center gap-2 bg-[#008751] hover:bg-[#006b40] text-white px-4 py-2.5 rounded-lg font-bold transition-colors w-full"
                                         >
-                                            {plumber.telephone}
+                                            <MessageSquare className="w-4 h-4" />
+                                            Contacter par SMS
                                         </a>
                                     </div>
 
