@@ -2,6 +2,57 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { logger } from "@/lib/logger";
 
+export async function GET(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params;
+
+        // Récupérer le plombier avec ses statistiques
+        const plumber = await prisma.plumber.findUnique({
+            where: { id },
+            include: {
+                reviews: {
+                    select: {
+                        rating: true,
+                    },
+                },
+            },
+        });
+
+        if (!plumber) {
+            return NextResponse.json(
+                { error: "Plombier non trouvé" },
+                { status: 404 }
+            );
+        }
+
+        // Calculer la note moyenne
+        const averageRating =
+            plumber.reviews.length > 0
+                ? plumber.reviews.reduce((sum, review) => sum + review.rating, 0) /
+                  plumber.reviews.length
+                : 0;
+
+        // Retourner les données sans le mot de passe
+        const { password, ...plumberData } = plumber;
+
+        return NextResponse.json({
+            ...plumberData,
+            averageRating: Number(averageRating.toFixed(1)),
+            reviewCount: plumber.reviews.length,
+            reviews: undefined, // Ne pas inclure les reviews dans la réponse
+        });
+    } catch (error) {
+        logger.error("Error fetching plumber", error instanceof Error ? error : new Error(String(error)));
+        return NextResponse.json(
+            { error: "Erreur lors de la récupération du plombier" },
+            { status: 500 }
+        );
+    }
+}
+
 export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
