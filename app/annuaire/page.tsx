@@ -150,6 +150,13 @@ export default function AnnuairePage() {
     const [viewMode, setViewMode] = useState<ViewMode>('table');
     const [sortBy, setSortBy] = useState<SortBy>('createdAt');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+    
+    // Contact modal state
+    const [showContactModal, setShowContactModal] = useState(false);
+    const [selectedPlumber, setSelectedPlumber] = useState<Plumber | null>(null);
+    const [contactForm, setContactForm] = useState({ name: "", phone: "", message: "" });
+    const [sendingSMS, setSendingSMS] = useState(false);
+    const [smsSuccess, setSmsSuccess] = useState(false);
 
     const fetchPlumbers = async (page: number, abortSignal?: AbortSignal) => {
         setLoading(true);
@@ -208,6 +215,51 @@ export default function AnnuairePage() {
         if (newPage >= 1 && newPage <= pagination.totalPages) {
             const abortController = new AbortController();
             fetchPlumbers(newPage, abortController.signal);
+        }
+    };
+
+    const openContactModal = (plumber: Plumber) => {
+        setSelectedPlumber(plumber);
+        setShowContactModal(true);
+        setSmsSuccess(false);
+        setContactForm({ name: "", phone: "", message: "" });
+    };
+
+    const closeContactModal = () => {
+        setShowContactModal(false);
+        setSelectedPlumber(null);
+        setContactForm({ name: "", phone: "", message: "" });
+    };
+
+    const handleSendContact = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedPlumber) return;
+
+        setSendingSMS(true);
+        try {
+            const response = await fetch("/api/sms/contact-plumber", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    plumberId: selectedPlumber.id,
+                    clientName: contactForm.name,
+                    clientPhone: contactForm.phone,
+                    message: contactForm.message,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Erreur lors de l'envoi");
+            }
+
+            setSmsSuccess(true);
+            setTimeout(() => {
+                closeContactModal();
+            }, 2000);
+        } catch (error) {
+            alert("Erreur lors de l'envoi du message. Veuillez réessayer.");
+        } finally {
+            setSendingSMS(false);
         }
     };
 
@@ -429,13 +481,13 @@ export default function AnnuairePage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <a
-                                                    href={`sms:${plumber.telephone}?body=Bonjour ${plumber.prenom}, je souhaite faire appel à vos services de plomberie.`}
+                                                <button
+                                                    onClick={() => openContactModal(plumber)}
                                                     className="inline-flex items-center gap-2 bg-[#008751] hover:bg-[#006b40] text-white px-4 py-2 rounded-lg font-medium transition-colors"
                                                 >
                                                     <MessageSquare className="w-4 h-4" />
                                                     Contacter
-                                                </a>
+                                                </button>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col gap-1">
@@ -524,13 +576,13 @@ export default function AnnuairePage() {
 
                                     {/* Contact Button */}
                                     <div className="mb-4">
-                                        <a
-                                            href={`sms:${plumber.telephone}?body=Bonjour ${plumber.prenom}, je souhaite faire appel à vos services de plomberie.`}
+                                        <button
+                                            onClick={() => openContactModal(plumber)}
                                             className="flex items-center justify-center gap-2 bg-[#008751] hover:bg-[#006b40] text-white px-4 py-2.5 rounded-lg font-bold transition-colors w-full"
                                         >
                                             <MessageSquare className="w-4 h-4" />
                                             Contacter par SMS
-                                        </a>
+                                        </button>
                                     </div>
 
                                     {/* Status Badges */}
@@ -624,6 +676,119 @@ export default function AnnuairePage() {
                                     <ChevronRight className="w-5 h-5" />
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Contact Modal */}
+                {showContactModal && selectedPlumber && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+                            {smsSuccess ? (
+                                <div className="text-center py-8">
+                                    <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                                        <CheckCircle className="w-8 h-8 text-green-600" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-slate-900 mb-2">
+                                        Message envoyé !
+                                    </h3>
+                                    <p className="text-slate-600">
+                                        {selectedPlumber.prenom} {selectedPlumber.nom} a reçu votre message
+                                    </p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="flex items-center justify-between mb-6">
+                                        <div>
+                                            <h3 className="text-xl font-bold text-slate-900">
+                                                Contacter {selectedPlumber.prenom}
+                                            </h3>
+                                            <p className="text-sm text-slate-500">
+                                                {selectedPlumber.ville}, {selectedPlumber.departement}
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={closeContactModal}
+                                            className="text-slate-400 hover:text-slate-600"
+                                        >
+                                            <XCircle className="w-6 h-6" />
+                                        </button>
+                                    </div>
+
+                                    <form onSubmit={handleSendContact} className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                                Votre nom
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={contactForm.name}
+                                                onChange={(e) =>
+                                                    setContactForm({ ...contactForm, name: e.target.value })
+                                                }
+                                                required
+                                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#008751] focus:border-transparent outline-none text-slate-900"
+                                                placeholder="Ex: Jean Kouassi"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                                Votre téléphone
+                                            </label>
+                                            <div className="relative">
+                                                <span className="absolute left-3 top-2.5 text-slate-500 font-medium">
+                                                    +229
+                                                </span>
+                                                <input
+                                                    type="tel"
+                                                    value={contactForm.phone}
+                                                    onChange={(e) =>
+                                                        setContactForm({ ...contactForm, phone: e.target.value })
+                                                    }
+                                                    required
+                                                    pattern="[0-9]{8}"
+                                                    className="w-full pl-16 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#008751] focus:border-transparent outline-none text-slate-900"
+                                                    placeholder="97 00 00 00"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">
+                                                Message (optionnel)
+                                            </label>
+                                            <textarea
+                                                value={contactForm.message}
+                                                onChange={(e) =>
+                                                    setContactForm({ ...contactForm, message: e.target.value })
+                                                }
+                                                rows={3}
+                                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#008751] focus:border-transparent outline-none text-slate-900 resize-none"
+                                                placeholder="Décrivez brièvement votre besoin..."
+                                            />
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={sendingSMS}
+                                            className="w-full bg-[#008751] hover:bg-[#006b40] disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            {sendingSMS ? (
+                                                <>
+                                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                                    Envoi en cours...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <MessageSquare className="w-5 h-5" />
+                                                    Envoyer le message
+                                                </>
+                                            )}
+                                        </button>
+                                    </form>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
