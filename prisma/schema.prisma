@@ -1,0 +1,55 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Plumber {
+  id            String   @id @default(uuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  nom           String
+  prenom        String
+  telephone     String   @unique
+  diplomeAnnee  Int
+  diplomeFileUrl String
+  photoUrl      String?
+  departement   String
+  ville         String
+  quartier      String
+  adresse       String?
+
+  // Statut & Paiement
+  isVerified    Boolean  @default(false)
+  hasPaid       Boolean  @default(false)
+  membershipId  String?  @unique 
+
+  // Relations
+  payments      Payment[]
+  reviews       Review[]
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  amount        Int
+  reference     String   @unique
+  status        String
+  plumberId     String
+  plumber       Plumber  @relation(fields: [plumberId], references: [id])
+  createdAt     DateTime @default(now())
+}
+
+model Review {
+  id            String   @id @default(uuid())
+  rating        Int
+  comment       String?
+  clientPhone   String?
+  plumberId     String
+  plumber       Plumber  @relation(fields: [plumberId], references: [id])
+  createdAt     DateTime @default(now())
+}
