@@ -60,7 +60,7 @@ export async function PATCH(
     try {
         const { id } = await params;
         const body = await request.json();
-        const { diplomeFileUrl, photoUrl, nom, prenom, departement, ville, quartier } = body;
+        const { diplomeFileUrl, photoUrl, nom, prenom, telephone, departement, ville, quartier } = body;
 
         // Check if plumber exists
         const existingPlumber = await prisma.plumber.findUnique({
@@ -87,6 +87,16 @@ export async function PATCH(
         }
         if (prenom !== undefined) {
             updateData.prenom = prenom;
+        }
+        if (telephone !== undefined) {
+            // Validate phone format (8 digits)
+            if (!/^[0-9]{8}$/.test(telephone)) {
+                return NextResponse.json(
+                    { error: "Le numéro de téléphone doit contenir exactement 8 chiffres" },
+                    { status: 400 }
+                );
+            }
+            updateData.telephone = telephone;
         }
         if (departement !== undefined) {
             updateData.departement = departement;

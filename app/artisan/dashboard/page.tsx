@@ -60,6 +60,7 @@ export default function ArtisanDashboard() {
   const [editForm, setEditForm] = useState({
     nom: "",
     prenom: "",
+    telephone: "",
     departement: "",
     ville: "",
     quartier: "",
@@ -83,6 +84,7 @@ export default function ArtisanDashboard() {
       setEditForm({
         nom: data.nom,
         prenom: data.prenom,
+        telephone: data.telephone,
         departement: data.departement,
         ville: data.ville,
         quartier: data.quartier,
@@ -104,6 +106,7 @@ export default function ArtisanDashboard() {
       setEditForm({
         nom: plumber.nom,
         prenom: plumber.prenom,
+        telephone: plumber.telephone,
         departement: plumber.departement,
         ville: plumber.ville,
         quartier: plumber.quartier,
@@ -308,6 +311,30 @@ export default function ArtisanDashboard() {
                           className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 bg-white"
                         />
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-slate-700 block mb-2">
+                        Téléphone (WhatsApp)
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5 text-slate-500 font-medium border-r pr-2 border-slate-300">
+                          +229
+                        </span>
+                        <input
+                          type="tel"
+                          value={editForm.telephone}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, telephone: e.target.value })
+                          }
+                          pattern="[0-9]{8}"
+                          placeholder="97 00 00 00"
+                          className="w-full pl-16 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 bg-white"
+                        />
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Ce numéro servira à recevoir les demandes clients
+                      </p>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
