@@ -25,6 +25,7 @@ interface PlumberData {
   nom: string;
   prenom: string;
   telephone: string;
+  phoneVerified: boolean;
   photoUrl: string | null;
   departement: string;
   ville: string;
@@ -65,6 +66,14 @@ export default function ArtisanDashboard() {
     ville: "",
     quartier: "",
   });
+  
+  // OTP verification state
+  const [showOTPVerification, setShowOTPVerification] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [sendingOTP, setSendingOTP] = useState(false);
+  const [verifyingOTP, setVerifyingOTP] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [phoneChanged, setPhoneChanged] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -117,6 +126,14 @@ export default function ArtisanDashboard() {
   const handleSave = async () => {
     if (!session?.user?.id) return;
 
+    // If phone changed and not verified, show OTP modal
+    if (phoneChanged && editForm.telephone !== plumber?.telephone) {
+      setShowOTPVerification(true);
+      setOtpSent(false);
+      setOtpCode("");
+      return;
+    }
+
     setIsSaving(true);
     try {
       const response = await fetch(`/api/plumbers/${session.user.id}`, {
@@ -129,11 +146,77 @@ export default function ArtisanDashboard() {
 
       await loadPlumberData();
       setIsEditing(false);
+      setPhoneChanged(false);
     } catch (error) {
       console.error("Error updating plumber:", error);
       alert("Erreur lors de la mise à jour du profil");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSendOTP = async () => {
+    setSendingOTP(true);
+    try {
+      const response = await fetch("/api/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telephone: editForm.telephone }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Erreur lors de l'envoi");
+      }
+
+      setOtpSent(true);
+      alert("Code envoyé par SMS !");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Erreur lors de l'envoi du code");
+    } finally {
+      setSendingOTP(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    setVerifyingOTP(true);
+    try {
+      const response = await fetch("/api/otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telephone: editForm.telephone, code: otpCode }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Code invalide");
+      }
+
+      // Update other fields
+      const updateResponse = await fetch(`/api/plumbers/${session?.user?.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nom: editForm.nom,
+          prenom: editForm.prenom,
+          departement: editForm.departement,
+          ville: editForm.ville,
+          quartier: editForm.quartier,
+        }),
+      });
+
+      if (!updateResponse.ok) throw new Error("Erreur lors de la mise à jour");
+
+      await loadPlumberData();
+      setShowOTPVerification(false);
+      setIsEditing(false);
+      setPhoneChanged(false);
+      alert("Téléphone vérifié et profil mis à jour !");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Erreur lors de la vérification");
+    } finally {
+      setVerifyingOTP(false);
     }
   };
 
@@ -328,15 +411,31 @@ export default function ArtisanDashboard() {
                             // Only allow numbers and limit to 8 digits
                             const value = e.target.value.replace(/\D/g, '').slice(0, 8);
                             setEditForm({ ...editForm, telephone: value });
+                            if (value !== plumber?.telephone) {
+                              setPhoneChanged(true);
+                            }
                           }}
                           placeholder="01 00 00 00"
                           maxLength={8}
                           className="w-full pl-16 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 bg-white"
                         />
                       </div>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Ce numéro servira à recevoir les demandes clients
-                      </p>
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-xs text-slate-500">
+                          Ce numéro servira à recevoir les demandes clients
+                        </p>
+                        {plumber?.phoneVerified && !phoneChanged && (
+                          <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
+                            <CheckCircle size={14} />
+                            Vérifié
+                          </span>
+                        )}
+                      </div>
+                      {phoneChanged && (
+                        <p className="text-xs text-amber-600 font-medium mt-1">
+                          ⚠️ Vous devrez vérifier ce nouveau numéro par SMS
+                        </p>
+                      )}
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
@@ -518,6 +617,87 @@ export default function ArtisanDashboard() {
           </div>
         </div>
       </main>
+
+      {/* OTP Verification Modal */}
+      {showOTPVerification && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-slate-900 mb-2">
+              Vérification du téléphone
+            </h3>
+            <p className="text-slate-600 mb-6">
+              Un code de vérification va être envoyé au <strong>{editForm.telephone}</strong>
+            </p>
+
+            {!otpSent ? (
+              <button
+                onClick={handleSendOTP}
+                disabled={sendingOTP}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center justify-center gap-2"
+              >
+                {sendingOTP ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Envoi en cours...
+                  </>
+                ) : (
+                  <>
+                    <MessageSquare size={20} />
+                    Envoyer le code par SMS
+                  </>
+                )}
+              </button>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Code de vérification (6 chiffres)
+                  </label>
+                  <input
+                    type="text"
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="000000"
+                    maxLength={6}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 text-center text-2xl tracking-widest font-mono"
+                  />
+                  <p className="text-xs text-slate-500 mt-2 text-center">
+                    Code valide pendant 5 minutes
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleSendOTP}
+                    disabled={sendingOTP}
+                    className="flex-1 border-2 border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    Renvoyer
+                  </button>
+                  <button
+                    onClick={handleVerifyOTP}
+                    disabled={verifyingOTP || otpCode.length !== 6}
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-bold transition-colors"
+                  >
+                    {verifyingOTP ? "Vérification..." : "Vérifier"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => {
+                setShowOTPVerification(false);
+                setOtpSent(false);
+                setOtpCode("");
+              }}
+              className="w-full mt-4 text-slate-600 hover:text-slate-800 py-2 text-sm font-medium"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

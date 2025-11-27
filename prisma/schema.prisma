@@ -16,6 +16,7 @@ model Plumber {
   nom           String
   prenom        String
   telephone     String   @unique
+  phoneVerified Boolean  @default(false)
   password      String?
   diplomeAnnee  Int
   diplomeFileUrl String
