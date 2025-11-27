@@ -33,7 +33,7 @@ export default function Navbar() {
                         Vérifier un Badge
                     </Link>
                     <Link
-                        href="#"
+                        href="/artisan/login"
                         className="text-emerald-700 font-bold hover:bg-emerald-50 px-4 py-2 rounded-lg transition"
                     >
                         Connexion Artisan
@@ -77,7 +77,7 @@ export default function Navbar() {
                         </Link>
                         <div className="border-t border-gray-100 my-2 pt-2">
                             <Link
-                                href="#"
+                                href="/artisan/login"
                                 className="block px-3 py-3 text-emerald-700 font-bold hover:bg-emerald-50 rounded-lg"
                                 onClick={() => setIsMenuOpen(false)}
                             >
