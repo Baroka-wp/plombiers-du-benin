@@ -1,72 +1,32 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 /**
- * Proxy for authentication and route protection
- * 
- * This is a basic implementation that can be extended with:
- * - JWT token validation
- * - Session management
- * - Role-based access control
+ * Proxy for authentication and route protection with NextAuth
  */
 
-// Routes that require authentication
-const protectedRoutes = [
-    "/admin",
-    "/dashboard",
-    // Add more protected routes as needed
-];
-
-// Routes that should redirect authenticated users
-const authRoutes = [
-    "/login",
-    "/register",
-];
-
-/**
- * Check if user is authenticated
- * This is a placeholder - implement your actual auth logic
- */
-function isAuthenticated(request: NextRequest): boolean {
-    // TODO: Implement actual authentication check
-    // Example: Check for JWT token in cookies or headers
-    const token = request.cookies.get("auth-token");
-    return !!token?.value;
-}
-
-/**
- * Get user role from request
- * This is a placeholder - implement your actual role check
- */
-function getUserRole(request: NextRequest): string | null {
-    // TODO: Implement actual role retrieval
-    // Example: Decode JWT and extract role
-    const role = request.cookies.get("user-role");
-    return role?.value || null;
-}
-
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
-    const isAuth = isAuthenticated(request);
+    
+    // Check for NextAuth session token
+    const token = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET,
+    });
 
-    // Check if route is protected
-    const isProtectedRoute = protectedRoutes.some((route) =>
-        pathname.startsWith(route)
-    );
-
-    // Check if route is auth route (login, register)
-    const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
-
-    // Redirect unauthenticated users from protected routes
-    if (isProtectedRoute && !isAuth) {
-        const loginUrl = new URL("/login", request.url);
-        loginUrl.searchParams.set("redirect", pathname);
-        return NextResponse.redirect(loginUrl);
+    // Protect artisan dashboard routes
+    if (pathname.startsWith("/artisan/dashboard")) {
+        if (!token) {
+            const loginUrl = new URL("/artisan/login", request.url);
+            loginUrl.searchParams.set("redirect", pathname);
+            return NextResponse.redirect(loginUrl);
+        }
     }
 
-    // Redirect authenticated users from auth routes
-    if (isAuthRoute && isAuth) {
-        return NextResponse.redirect(new URL("/", request.url));
+    // Redirect authenticated artisans from login page
+    if (pathname === "/artisan/login" && token) {
+        return NextResponse.redirect(new URL("/artisan/dashboard", request.url));
     }
 
     // Add security headers to all responses
@@ -82,11 +42,11 @@ export function proxy(request: NextRequest) {
     // Content Security Policy (adjust as needed)
     const csp = [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Adjust for Next.js
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: https:",
         "font-src 'self' data:",
-        "connect-src 'self' https://api.cloudinary.com",
+        "connect-src 'self' https://api.cloudinary.com https:",
     ].join("; ");
 
     response.headers.set("Content-Security-Policy", csp);
