@@ -335,7 +335,7 @@ export default function ArtisanDashboard() {
                         />
                       </div>
                       <p className="text-xs text-slate-500 mt-1">
-                        Ce numéro servira à recevoir les demandes clients (commence par 01, 40, 41, 42, 43, 44, 45, 46, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 90, 91, 96, 97, 98, 99)
+                        Ce numéro servira à recevoir les demandes clients
                       </p>
                     </div>
 
