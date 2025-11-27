@@ -324,16 +324,18 @@ export default function ArtisanDashboard() {
                         <input
                           type="tel"
                           value={editForm.telephone}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, telephone: e.target.value })
-                          }
-                          pattern="[0-9]{8}"
-                          placeholder="97 00 00 00"
+                          onChange={(e) => {
+                            // Only allow numbers and limit to 8 digits
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 8);
+                            setEditForm({ ...editForm, telephone: value });
+                          }}
+                          placeholder="01 00 00 00"
+                          maxLength={8}
                           className="w-full pl-16 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 bg-white"
                         />
                       </div>
                       <p className="text-xs text-slate-500 mt-1">
-                        Ce numéro servira à recevoir les demandes clients
+                        Ce numéro servira à recevoir les demandes clients (commence par 01, 40, 41, 42, 43, 44, 45, 46, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 90, 91, 96, 97, 98, 99)
                       </p>
                     </div>
 
@@ -453,17 +455,32 @@ export default function ArtisanDashboard() {
               <h3 className="text-lg font-bold text-slate-900 mb-4">Mes Documents</h3>
               <div className="space-y-3">
                 {plumber.diplomeFileUrl && (
-                  <a
-                    href={plumber.diplomeFileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition"
-                  >
-                    <FileText className="w-5 h-5 text-emerald-600" />
-                    <span className="text-sm font-medium text-slate-900">
-                      Diplôme / Attestation
-                    </span>
-                  </a>
+                  <>
+                    <a
+                      href={plumber.diplomeFileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition"
+                    >
+                      <FileText className="w-5 h-5 text-emerald-600" />
+                      <div className="flex-1">
+                        <span className="text-sm font-medium text-slate-900 block">
+                          Diplôme / Attestation
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          Cliquer pour voir
+                        </span>
+                      </div>
+                    </a>
+                    <a
+                      href={plumber.diplomeFileUrl}
+                      download
+                      className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                    >
+                      <Download className="w-4 h-4" />
+                      Télécharger mon diplôme
+                    </a>
+                  </>
                 )}
               </div>
             </div>

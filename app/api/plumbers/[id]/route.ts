@@ -89,14 +89,24 @@ export async function PATCH(
             updateData.prenom = prenom;
         }
         if (telephone !== undefined) {
-            // Validate phone format (8 digits)
-            if (!/^[0-9]{8}$/.test(telephone)) {
+            // Validate phone format (8 digits, Benin format)
+            const cleanedPhone = telephone.replace(/\s/g, ''); // Remove spaces
+            if (!/^[0-9]{8}$/.test(cleanedPhone)) {
                 return NextResponse.json(
                     { error: "Le numéro de téléphone doit contenir exactement 8 chiffres" },
                     { status: 400 }
                 );
             }
-            updateData.telephone = telephone;
+            // Valid Benin prefixes: 01, 40-46, 51-69, 90-91, 96-99
+            const prefix = cleanedPhone.substring(0, 2);
+            const validPrefixes = ['01', '40', '41', '42', '43', '44', '45', '46', '51', '52', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '90', '91', '96', '97', '98', '99'];
+            if (!validPrefixes.includes(prefix)) {
+                return NextResponse.json(
+                    { error: "Le numéro de téléphone n'est pas un numéro valide du Bénin" },
+                    { status: 400 }
+                );
+            }
+            updateData.telephone = cleanedPhone;
         }
         if (departement !== undefined) {
             updateData.departement = departement;
