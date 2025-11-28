@@ -259,7 +259,7 @@ export default function PlumberProfilePage({
 
           {/* Quick Info */}
           <div className="p-6 bg-white">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-emerald-600">
                   {plumber.diplomeAnnee}
@@ -280,11 +280,21 @@ export default function PlumberProfilePage({
                 </div>
                 <div className="text-sm text-slate-600">Satisfaction</div>
               </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-emerald-600 line-clamp-2 break-words">
-                  {plumber.quartier}
+            </div>
+            
+            {/* Adresse complète */}
+            <div className="border-t border-slate-200 pt-4 mt-4">
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <div className="text-sm font-medium text-slate-600 mb-1">Adresse complète</div>
+                  <div className="text-base text-slate-900 font-medium">
+                    {plumber.quartier}
+                  </div>
+                  <div className="text-sm text-slate-600 mt-1">
+                    {plumber.ville}, {plumber.departement}
+                  </div>
                 </div>
-                <div className="text-sm text-slate-600">Quartier</div>
               </div>
             </div>
           </div>
