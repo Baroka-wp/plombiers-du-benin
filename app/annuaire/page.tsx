@@ -153,7 +153,7 @@ function AnnuairePageContent() {
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || "");
     const [departementFilter, setDepartementFilter] = useState(searchParams.get('departement') || "");
-    const [viewMode, setViewMode] = useState<ViewMode>('table');
+    const [viewMode, setViewMode] = useState<ViewMode>('map');
     const [sortBy, setSortBy] = useState<SortBy>('createdAt');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
