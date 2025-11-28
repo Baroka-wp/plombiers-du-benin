@@ -25,11 +25,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate phone format (8 digits)
+    // Validate phone format (10 digits)
     const cleanedPhone = telephone.replace(/\s/g, '');
-    if (!/^[0-9]{8}$/.test(cleanedPhone)) {
+    if (!/^[0-9]{10}$/.test(cleanedPhone)) {
       return NextResponse.json(
-        { error: "Le numéro doit contenir exactement 8 chiffres" },
+        { error: "Le numéro doit contenir exactement 10 chiffres" },
         { status: 400 }
       );
     }

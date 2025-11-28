@@ -408,15 +408,15 @@ export default function ArtisanDashboard() {
                           type="tel"
                           value={editForm.telephone}
                           onChange={(e) => {
-                            // Only allow numbers and limit to 8 digits
-                            const value = e.target.value.replace(/\D/g, '').slice(0, 8);
+                            // Only allow numbers and limit to 10 digits
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 10);
                             setEditForm({ ...editForm, telephone: value });
                             if (value !== plumber?.telephone) {
                               setPhoneChanged(true);
                             }
                           }}
-                          placeholder="01 00 00 00"
-                          maxLength={8}
+                          placeholder="01 00 00 00 00"
+                          maxLength={10}
                           className="w-full pl-16 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 bg-white"
                         />
                       </div>

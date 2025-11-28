@@ -747,9 +747,9 @@ export default function AnnuairePage() {
                                                         setContactForm({ ...contactForm, phone: e.target.value })
                                                     }
                                                     required
-                                                    pattern="[0-9]{8}"
+                                                    pattern="[0-9]{10}"
                                                     className="w-full pl-16 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#008751] focus:border-transparent outline-none text-slate-900"
-                                                    placeholder="97 00 00 00"
+                                                    placeholder="97 00 00 00 00"
                                                 />
                                             </div>
                                         </div>

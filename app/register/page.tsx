@@ -312,8 +312,8 @@ export default function InscriptionPage() {
                                             name="telephone"
                                             value={formData.telephone}
                                             required
-                                            placeholder="97 00 00 00"
-                                            pattern="[0-9]{8}"
+                                            placeholder="97 00 00 00 00"
+                                            pattern="[0-9]{10}"
                                             className="w-full pl-16 p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition"
                                             onChange={handleChange}
                                         />
