@@ -565,6 +565,19 @@ export default function InscriptionPage() {
                         </div>
                     )}
 
+                    {/* Liens légaux */}
+                    <div className="px-8 py-4 bg-gray-50 border-t border-gray-100">
+                        <p className="text-xs text-gray-500 text-center">
+                            En soumettant ce formulaire, vous acceptez nos{' '}
+                            <a href="/cgu" target="_blank" rel="noopener noreferrer" className="text-emerald-600 hover:text-emerald-700 underline font-medium">Conditions Générales d'Utilisation</a>
+                            {', '}
+                            <a href="/confidentialite" target="_blank" rel="noopener noreferrer" className="text-emerald-600 hover:text-emerald-700 underline font-medium">Politique de Confidentialité</a>
+                            {' et notre '}
+                            <a href="/rgpd" target="_blank" rel="noopener noreferrer" className="text-emerald-600 hover:text-emerald-700 underline font-medium">Politique RGPD</a>
+                            .
+                        </p>
+                    </div>
+
                     {/* Navigation Footer */}
                     <div className="p-8 bg-gray-50 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
                         {currentStep > 1 && (

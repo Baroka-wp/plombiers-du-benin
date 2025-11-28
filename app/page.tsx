@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Search, Shield, CheckCircle, MapPin, QrCode, Phone } from 'lucide-react';
+import { Search, Shield, CheckCircle, MapPin, QrCode, Phone, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function LandingPage() {
@@ -146,8 +146,8 @@ export default function LandingPage() {
               <div className="absolute -inset-4 bg-emerald-200 rounded-2xl transform rotate-3 opacity-30"></div>
               <div className="bg-white border border-gray-200 rounded-2xl shadow-xl p-8 relative">
                 <div className="flex items-center gap-4 mb-6 border-b pb-6">
-                  <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1581578731117-1045296611b8?q=80&w=200&auto=format&fit=crop" alt="Artisan" className="w-full h-full object-cover" />
+                  <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-full flex items-center justify-center overflow-hidden">
+                    <User className="w-12 h-12 text-white" />
                   </div>
                   <div>
                     <div className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1">Badge Certifié</div>
