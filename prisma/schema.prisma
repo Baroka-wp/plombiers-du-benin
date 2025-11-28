@@ -55,3 +55,13 @@ model Review {
   plumber       Plumber  @relation(fields: [plumberId], references: [id])
   createdAt     DateTime @default(now())
 }
+
+model Admin {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String
+  name          String
+  role          String   @default("admin") // admin, super_admin
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

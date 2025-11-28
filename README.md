@@ -100,6 +100,9 @@ plombier-benin/
    # Appliquer les migrations
    npm run db:push
    
+   # Créer un compte admin
+   npx tsx scripts/create-admin.ts admin@example.com motdepasse123 "Nom Admin"
+   
    # (Optionnel) Ouvrir Prisma Studio
    npm run db:studio
    ```
@@ -180,6 +183,44 @@ Exemples:
 - fix(api): fix rate limiting bug
 - refactor(prisma): implement singleton pattern
 ```
+
+## 🔐 Interface Admin
+
+L'application dispose d'un dashboard administrateur complet pour gérer la plateforme.
+
+### Accès Admin
+
+1. **Créer un compte admin** :
+   ```bash
+   npx tsx scripts/create-admin.ts admin@example.com motdepasse123 "Nom Admin"
+   ```
+
+2. **Se connecter** :
+   - Aller sur `/admin/login`
+   - Utiliser l'email et le mot de passe créés
+
+### Fonctionnalités Admin
+
+- **Dashboard** (`/admin/dashboard`) : Vue d'ensemble avec statistiques
+  - Nombre total de plombiers
+  - Plombiers vérifiés et ayant payé
+  - Statistiques de paiements
+  - Répartition par département et ville
+  - Plombiers et paiements récents
+
+- **Gestion des Plombiers** (`/admin/plumbers`) :
+  - Liste complète avec filtres (recherche, département, statut)
+  - Vérifier/désactiver un plombier
+  - Marquer comme ayant payé
+  - Voir les détails de chaque plombier
+
+### Sécurité
+
+⚠️ **Important** : En production, implémenter un système d'authentification plus robuste avec :
+- Tokens JWT sécurisés
+- Sessions serveur
+- Protection CSRF
+- Rate limiting sur les routes admin
 
 ## 🧪 Tests
 
