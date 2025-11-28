@@ -281,7 +281,7 @@ export default function PlumberProfilePage({
                 <div className="text-sm text-slate-600">Satisfaction</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-emerald-600">
+                <div className="text-lg font-bold text-emerald-600 line-clamp-2 break-words">
                   {plumber.quartier}
                 </div>
                 <div className="text-sm text-slate-600">Quartier</div>
@@ -379,7 +379,7 @@ export default function PlumberProfilePage({
                   onChange={(e) => setComment(e.target.value)}
                   placeholder="Décrivez votre expérience avec ce plombier..."
                   rows={4}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none text-slate-900 placeholder:text-slate-400"
                 />
               </div>
 

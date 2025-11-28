@@ -151,7 +151,7 @@ function AdminPlumbersPageContent() {
                 onChange={(e) =>
                   setFilters({ ...filters, search: e.target.value })
                 }
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent text-slate-900 placeholder:text-slate-400"
               />
             </div>
             <select
@@ -159,7 +159,7 @@ function AdminPlumbersPageContent() {
               onChange={(e) =>
                 setFilters({ ...filters, departement: e.target.value })
               }
-              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent text-slate-900 bg-white"
             >
               <option value="">Tous les départements</option>
               <option value="Littoral">Littoral</option>
@@ -171,7 +171,7 @@ function AdminPlumbersPageContent() {
               onChange={(e) =>
                 setFilters({ ...filters, isVerified: e.target.value })
               }
-              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent text-slate-900 bg-white"
             >
               <option value="">Tous les statuts</option>
               <option value="true">Vérifiés</option>
@@ -182,7 +182,7 @@ function AdminPlumbersPageContent() {
               onChange={(e) =>
                 setFilters({ ...filters, hasPaid: e.target.value })
               }
-              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-transparent text-slate-900 bg-white"
             >
               <option value="">Tous les paiements</option>
               <option value="true">Ayant payé</option>

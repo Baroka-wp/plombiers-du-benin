@@ -307,7 +307,6 @@ export default function BadgePage({ params }: { params: Promise<{ id: string }> 
                       <p className="text-slate-700 text-sm mt-2">
                         {plumber.ville}, {plumber.departement}
                       </p>
-                      <p className="text-slate-700 text-sm font-semibold">{plumber.telephone}</p>
                     </div>
 
                     {/* Status - Simplifié et visible */}
