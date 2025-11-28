@@ -11,11 +11,11 @@ export default function LandingPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const params = new URLSearchParams();
     if (departement) params.append('departement', departement);
     if (searchTerm) params.append('search', searchTerm);
-    
+
     const queryString = params.toString();
     router.push(`/annuaire${queryString ? `?${queryString}` : ''}`);
   };
@@ -48,7 +48,7 @@ export default function LandingPage() {
           <form onSubmit={handleSearch} className="w-full max-w-4xl bg-white p-2 rounded-2xl shadow-2xl flex flex-col md:flex-row gap-2 text-left">
             <div className="flex-1 relative">
               <MapPin className="absolute left-4 top-3.5 text-gray-400" size={20} />
-              <select 
+              <select
                 value={departement}
                 onChange={(e) => setDepartement(e.target.value)}
                 className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500 text-gray-700 font-medium h-full appearance-none"
@@ -78,7 +78,7 @@ export default function LandingPage() {
                 className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-500 text-gray-900 placeholder-gray-500 h-full"
               />
             </div>
-            <button 
+            <button
               type="submit"
               className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-bold text-lg transition shadow-lg w-full md:w-auto"
             >
