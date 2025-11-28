@@ -40,9 +40,14 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const sortBy = searchParams.get('sortBy') || 'createdAt';
-    const sortOrder = searchParams.get('sortOrder') || 'desc';
+    const sortOrderParam = searchParams.get('sortOrder') || 'desc';
     const search = searchParams.get('search') || '';
     const departement = searchParams.get('departement') || '';
+    
+    // Validate and type sortOrder
+    const sortOrder: 'asc' | 'desc' = (sortOrderParam === 'asc' || sortOrderParam === 'desc') 
+        ? sortOrderParam 
+        : 'desc';
     
     try {
         const skip = (page - 1) * limit;
@@ -72,12 +77,12 @@ export async function GET(request: NextRequest) {
         let orderBy: Record<string, "asc" | "desc"> = {};
 
         if (sortBy === 'name') {
-            orderBy = { nom: sortOrder as 'asc' | 'desc' };
+            orderBy = { nom: sortOrder };
         } else if (sortBy === 'rating') {
             // For rating, we'll sort after fetching since it's calculated
             orderBy = { createdAt: 'desc' };
         } else {
-            orderBy = { [sortBy]: sortOrder as 'asc' | 'desc' };
+            orderBy = { [sortBy]: sortOrder };
         }
 
         // Fetch plumbers with their reviews for rating calculation
