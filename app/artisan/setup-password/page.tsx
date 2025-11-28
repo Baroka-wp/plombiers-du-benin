@@ -129,7 +129,7 @@ export default function SetupPasswordPage() {
                   type="tel"
                   value={telephone}
                   onChange={(e) => setTelephone(e.target.value)}
-                  placeholder="97 00 00 00 00"
+                  placeholder="97000000 ou 22997000000"
                   required
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition text-gray-900 placeholder:text-gray-400"
                 />

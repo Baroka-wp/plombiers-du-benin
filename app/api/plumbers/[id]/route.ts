@@ -89,11 +89,11 @@ export async function PATCH(
             updateData.prenom = prenom;
         }
         if (telephone !== undefined) {
-            // Validate phone format (10 digits)
+            // Validate phone format (8 or 10 digits)
             const cleanedPhone = telephone.replace(/\s/g, ''); // Remove spaces
-            if (!/^[0-9]{10}$/.test(cleanedPhone)) {
+            if (!/^[0-9]{8}$/.test(cleanedPhone) && !/^[0-9]{10}$/.test(cleanedPhone)) {
                 return NextResponse.json(
-                    { error: "Le numéro de téléphone doit contenir exactement 10 chiffres" },
+                    { error: "Le numéro de téléphone doit contenir 8 ou 10 chiffres" },
                     { status: 400 }
                 );
             }

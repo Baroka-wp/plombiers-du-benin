@@ -79,6 +79,14 @@ plombier-benin/
    # Database
    DATABASE_URL="postgresql://user:password@localhost:5432/plombier_benin?schema=public"
    
+   # NextAuth
+   NEXTAUTH_URL="http://localhost:3000"
+   NEXTAUTH_SECRET="your-secret-key-here" # Générer avec: openssl rand -base64 32
+   
+   # Termii SMS (pour la vérification OTP)
+   TERMII_API_KEY="your_termii_api_key"
+   TERMII_SENDER_ID="N-Alert" # Optionnel, par défaut "N-Alert"
+   
    # Cloudinary
    NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="your_upload_preset_name"
    NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="your_cloud_name"
@@ -146,6 +154,10 @@ plombier-benin/
 ### Variables d'environnement requises
 
 - `DATABASE_URL` : URL de connexion PostgreSQL
+- `NEXTAUTH_URL` : URL de base de l'application (ex: `http://localhost:3000` en dev, `https://yourdomain.com` en prod)
+- `NEXTAUTH_SECRET` : Clé secrète pour NextAuth (générer avec `openssl rand -base64 32`)
+- `TERMII_API_KEY` : Clé API Termii pour l'envoi de SMS OTP (voir `TERMII_GUIDE.md`)
+- `TERMII_SENDER_ID` : ID de l'expéditeur SMS (optionnel, par défaut "N-Alert")
 - `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` : Preset Cloudinary
 - `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` : Nom du cloud Cloudinary
 

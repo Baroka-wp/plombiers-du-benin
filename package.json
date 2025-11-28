@@ -19,7 +19,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^6.19.0",
-    "africastalking": "^0.7.7",
+    "axios": "^1.7.9",
     "bcryptjs": "^3.0.3",
     "html2canvas": "^1.4.1",
     "lucide-react": "^0.554.0",

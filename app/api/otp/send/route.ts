@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { generateOTP, storeOTP } from "@/lib/otp-store";
-import { sendSMS, formatBeninPhoneNumber } from "@/lib/sms";
+import { smsService } from "@/lib/sms";
 import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
@@ -25,49 +24,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate phone format (10 digits)
+    // Validate phone format (8 or 10 digits)
     const cleanedPhone = telephone.replace(/\s/g, '');
-    if (!/^[0-9]{10}$/.test(cleanedPhone)) {
+    if (!/^[0-9]{8}$/.test(cleanedPhone) && !/^[0-9]{10}$/.test(cleanedPhone)) {
       return NextResponse.json(
-        { error: "Le numéro doit contenir exactement 10 chiffres" },
+        { error: "Le numéro doit contenir 8 ou 10 chiffres" },
         { status: 400 }
       );
     }
 
-    // Generate OTP
-    const otp = generateOTP();
-    storeOTP(cleanedPhone, otp);
-
-    // Format phone for Benin
-    const formattedPhone = formatBeninPhoneNumber(cleanedPhone);
-
-    // Send SMS
-    const message = `Votre code de vérification Plombiers Bénin est: ${otp}. Valide 5 minutes.`;
-    const result = await sendSMS({
-      to: formattedPhone,
-      message,
-    });
+    // Send OTP via Termii
+    const result = await smsService.sendOTP(cleanedPhone);
 
     if (!result.success) {
       logger.error("Failed to send OTP SMS", new Error(result.error || "Unknown error"), {
         userId: session.user.id,
-        phone: formattedPhone,
+        phone: cleanedPhone,
       });
 
       return NextResponse.json(
-        { error: "Erreur lors de l'envoi du code" },
+        { error: result.error || "Erreur lors de l'envoi du code" },
         { status: 500 }
       );
     }
 
     logger.info("OTP sent successfully", undefined, {
       userId: session.user.id,
-      phone: formattedPhone,
+      phone: cleanedPhone,
+      pinId: result.pinId,
     });
 
     return NextResponse.json({
       success: true,
       message: "Code envoyé par SMS",
+      pinId: result.pinId, // Nécessaire pour vérifier ensuite
     });
   } catch (error) {
     logger.error("Send OTP error", error instanceof Error ? error : new Error(String(error)));
@@ -77,4 +67,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

@@ -76,7 +76,8 @@ export default function ArtisanDashboard() {
   const [verifyingOTP, setVerifyingOTP] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [phoneChanged, setPhoneChanged] = useState(false);
-  
+  const [otpPinId, setOtpPinId] = useState<string | null>(null); // Termii pinId
+
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
@@ -170,11 +171,14 @@ export default function ArtisanDashboard() {
         body: JSON.stringify({ telephone: editForm.telephone }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Erreur lors de l'envoi");
+        throw new Error(data.error || "Erreur lors de l'envoi");
       }
 
+      // Stocker le pinId de Termii pour vérification
+      setOtpPinId(data.pinId);
       setOtpSent(true);
       setToast({ message: "Code envoyé par SMS avec succès !", type: "success" });
     } catch (error) {
@@ -185,12 +189,17 @@ export default function ArtisanDashboard() {
   };
 
   const handleVerifyOTP = async () => {
+    if (!otpPinId) {
+      setToast({ message: "Erreur: Veuillez renvoyer le code", type: "error" });
+      return;
+    }
+
     setVerifyingOTP(true);
     try {
       const response = await fetch("/api/otp/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ telephone: editForm.telephone, code: otpCode }),
+        body: JSON.stringify({ pinId: otpPinId, code: otpCode }),
       });
 
       const data = await response.json();
@@ -421,7 +430,7 @@ export default function ArtisanDashboard() {
                               setPhoneChanged(true);
                             }
                           }}
-                          placeholder="01 00 00 00 00"
+                          placeholder="97000000 ou 22997000000"
                           maxLength={10}
                           className="w-full pl-16 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900 bg-white"
                         />

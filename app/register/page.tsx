@@ -314,8 +314,8 @@ export default function InscriptionPage() {
                                             name="telephone"
                                             value={formData.telephone}
                                             required
-                                            placeholder="97 00 00 00 00"
-                                            pattern="[0-9]{10}"
+                                            placeholder="97000000 ou 22997000000"
+                                            pattern="[0-9]{8,10}"
                                             className="w-full pl-16 p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none transition"
                                             onChange={handleChange}
                                         />
@@ -494,7 +494,7 @@ export default function InscriptionPage() {
                                 <h3 className="text-sm font-bold text-gray-700 mb-4">Prévisualisation de votre badge</h3>
                                 {/* Bordure extérieure verte */}
                                 <div className="p-1 bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl shadow-xl">
-                                    <div 
+                                    <div
                                         className="bg-[#F5F1E8] rounded-lg shadow-lg p-6 relative"
                                         style={{
                                             backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E")`,
@@ -507,7 +507,7 @@ export default function InscriptionPage() {
                                         <div className="absolute top-3 right-3">
                                             <BeninFlag className="w-8 h-8 drop-shadow-md" />
                                         </div>
-                                        
+
                                         <div className="text-center mb-4 mt-8">
                                             <div className="w-20 h-20 mx-auto bg-gray-200 rounded-full flex items-center justify-center overflow-hidden border-4 border-emerald-600 shadow-lg mb-3">
                                                 {formData.profilePhotoUrl ? (
@@ -519,7 +519,7 @@ export default function InscriptionPage() {
                                             <div className="text-lg font-bold text-gray-900">{formData.nom || "NOM"} {formData.prenom || "Prénom"}</div>
                                             <div className="text-gray-600 text-sm">Plombier - {formData.ville || "Ville"}</div>
                                         </div>
-                                        
+
                                         <div className="space-y-3">
                                             <div className="flex justify-between text-sm">
                                                 <span className="text-gray-600 font-medium">Statut</span>

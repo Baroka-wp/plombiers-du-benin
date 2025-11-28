@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { verifyOTP } from "@/lib/otp-store";
-import { prisma } from "@/lib/prisma";
+import { smsService } from "@/lib/sms";
 import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
@@ -16,45 +15,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { telephone, code } = await request.json();
+    const { pinId, code } = await request.json();
 
-    if (!telephone || !code) {
+    if (!pinId || !code) {
       return NextResponse.json(
-        { error: "Numéro et code requis" },
+        { error: "Pin ID et code requis" },
         { status: 400 }
       );
     }
 
-    // Clean phone
-    const cleanedPhone = telephone.replace(/\s/g, '');
+    // Verify OTP via Termii
+    const result = await smsService.verifyOTP(pinId, code);
 
-    // Verify OTP
-    const result = verifyOTP(cleanedPhone, code);
+    if (!result.success) {
+      logger.warn("OTP verification failed", undefined, {
+        userId: session.user.id,
+        pinId,
+      });
 
-    if (!result.valid) {
       return NextResponse.json(
-        { error: result.message },
+        { error: result.error || "Code invalide" },
         { status: 400 }
       );
     }
 
-    // Update plumber phone and mark as verified
-    await prisma.plumber.update({
-      where: { id: session.user.id },
-      data: {
-        telephone: cleanedPhone,
-        phoneVerified: true,
-      },
-    });
-
-    logger.info("Phone verified successfully", undefined, {
+    logger.info("OTP verified successfully", undefined, {
       userId: session.user.id,
-      phone: cleanedPhone,
+      pinId,
     });
 
     return NextResponse.json({
       success: true,
-      message: "Numéro vérifié avec succès",
+      message: "Code vérifié avec succès",
     });
   } catch (error) {
     logger.error("Verify OTP error", error instanceof Error ? error : new Error(String(error)));
@@ -64,4 +56,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

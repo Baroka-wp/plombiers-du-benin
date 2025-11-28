@@ -5,7 +5,11 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Providers } from "./providers";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ 
+  subsets: ["latin"],
+  display: "swap",
+  fallback: ["system-ui", "arial"],
+});
 
 export const metadata: Metadata = {
   title: "Les Plombiers du Bénin - Répertoire Officiel",

@@ -43,10 +43,10 @@ export async function proxy(request: NextRequest) {
     const csp = [
         "default-src 'self'",
         "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-        "style-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "img-src 'self' data: https:",
-        "font-src 'self' data:",
-        "connect-src 'self' https://api.cloudinary.com https:",
+        "font-src 'self' data: https://fonts.gstatic.com",
+        "connect-src 'self' https://api.cloudinary.com https://fonts.googleapis.com https:",
     ].join("; ");
 
     response.headers.set("Content-Security-Policy", csp);

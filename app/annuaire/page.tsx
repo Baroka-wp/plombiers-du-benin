@@ -151,7 +151,7 @@ export default function AnnuairePage() {
     const [viewMode, setViewMode] = useState<ViewMode>('table');
     const [sortBy, setSortBy] = useState<SortBy>('createdAt');
     const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
-    
+
     // Contact modal state
     const [showContactModal, setShowContactModal] = useState(false);
     const [selectedPlumber, setSelectedPlumber] = useState<Plumber | null>(null);
@@ -170,17 +170,17 @@ export default function AnnuairePage() {
                 `/api/plumbers?page=${page}&limit=10&sortBy=${sortBy}&sortOrder=${sortOrder}${searchParam}${departementParam}`,
                 { signal: abortSignal }
             );
-            
+
             if (!response.ok) {
                 throw new Error(`Erreur ${response.status}: ${response.statusText}`);
             }
-            
+
             const data = await response.json();
-            
+
             if (data.error) {
                 throw new Error(data.error);
             }
-            
+
             setPlumbers(data.plumbers || []);
             setPagination(data.pagination || {
                 page: 1,
@@ -207,7 +207,7 @@ export default function AnnuairePage() {
     useEffect(() => {
         const abortController = new AbortController();
         fetchPlumbers(1, abortController.signal);
-        
+
         return () => {
             abortController.abort();
         };
@@ -347,8 +347,8 @@ export default function AnnuairePage() {
                             <button
                                 onClick={() => setViewMode('table')}
                                 className={`px-3 py-2 rounded-md transition-colors ${viewMode === 'table'
-                                        ? 'bg-[#008751] text-white'
-                                        : 'text-slate-600 hover:bg-slate-100'
+                                    ? 'bg-[#008751] text-white'
+                                    : 'text-slate-600 hover:bg-slate-100'
                                     }`}
                             >
                                 <List className="w-5 h-5" />
@@ -356,8 +356,8 @@ export default function AnnuairePage() {
                             <button
                                 onClick={() => setViewMode('card')}
                                 className={`px-3 py-2 rounded-md transition-colors ${viewMode === 'card'
-                                        ? 'bg-[#008751] text-white'
-                                        : 'text-slate-600 hover:bg-slate-100'
+                                    ? 'bg-[#008751] text-white'
+                                    : 'text-slate-600 hover:bg-slate-100'
                                     }`}
                             >
                                 <Grid className="w-5 h-5" />
@@ -660,8 +660,8 @@ export default function AnnuairePage() {
                                                 <button
                                                     onClick={() => handlePageChange(page)}
                                                     className={`px-4 py-2 rounded-lg font-medium transition-colors ${page === pagination.page
-                                                            ? "bg-[#008751] text-white"
-                                                            : "text-slate-700 hover:bg-slate-100"
+                                                        ? "bg-[#008751] text-white"
+                                                        : "text-slate-700 hover:bg-slate-100"
                                                         }`}
                                                 >
                                                     {page}
@@ -749,9 +749,9 @@ export default function AnnuairePage() {
                                                         setContactForm({ ...contactForm, phone: e.target.value })
                                                     }
                                                     required
-                                                    pattern="[0-9]{10}"
+                                                    pattern="[0-9]{8,10}"
                                                     className="w-full pl-16 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#008751] focus:border-transparent outline-none text-slate-900"
-                                                    placeholder="97 00 00 00 00"
+                                                    placeholder="97000000 ou 22997000000"
                                                 />
                                             </div>
                                         </div>
