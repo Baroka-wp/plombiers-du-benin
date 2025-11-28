@@ -35,14 +35,16 @@ export async function GET(request: NextRequest) {
             }
         );
     }
+    
+    const searchParams = request.nextUrl.searchParams;
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const sortBy = searchParams.get('sortBy') || 'createdAt';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
+    const search = searchParams.get('search') || '';
+    const departement = searchParams.get('departement') || '';
+    
     try {
-        const searchParams = request.nextUrl.searchParams;
-        const page = parseInt(searchParams.get('page') || '1');
-        const limit = parseInt(searchParams.get('limit') || '10');
-        const sortBy = searchParams.get('sortBy') || 'createdAt';
-        const sortOrder = searchParams.get('sortOrder') || 'desc';
-        const search = searchParams.get('search') || '';
-        const departement = searchParams.get('departement') || '';
         const skip = (page - 1) * limit;
 
         // Build where clause for search filtering
@@ -70,12 +72,12 @@ export async function GET(request: NextRequest) {
         let orderBy: Record<string, "asc" | "desc"> = {};
 
         if (sortBy === 'name') {
-            orderBy = { nom: sortOrder };
+            orderBy = { nom: sortOrder as 'asc' | 'desc' };
         } else if (sortBy === 'rating') {
             // For rating, we'll sort after fetching since it's calculated
             orderBy = { createdAt: 'desc' };
         } else {
-            orderBy = { [sortBy]: sortOrder };
+            orderBy = { [sortBy]: sortOrder as 'asc' | 'desc' };
         }
 
         // Fetch plumbers with their reviews for rating calculation
@@ -200,7 +202,7 @@ export async function POST(request: NextRequest) {
             },
         });
 
-        logger.info("Plumber record created", undefined, { plumberId: plumber.id });
+        logger.info("Plumber record created", { plumberId: plumber.id });
 
         return NextResponse.json({
             id: plumber.id,

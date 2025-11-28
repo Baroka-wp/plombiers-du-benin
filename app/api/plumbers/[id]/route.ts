@@ -116,7 +116,7 @@ export async function PATCH(
             data: updateData,
         });
 
-        logger.info("Plumber record updated", undefined, { plumberId: id });
+        logger.info("Plumber record updated", { plumberId: id });
 
         return NextResponse.json({
             id: updatedPlumber.id,

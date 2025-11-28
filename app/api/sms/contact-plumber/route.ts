@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     // POST https://api.ng.termii.com/api/sms/send
     // For now, we'll log this and return success
     
-    logger.info("Contact request", undefined, {
+    logger.info("Contact request", {
       plumberId,
       plumberName: `${plumber.prenom} ${plumber.nom}`,
       clientName,

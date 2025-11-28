@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Star, MapPin, Phone, CheckCircle, XCircle, ChevronLeft, ChevronRight, Grid, List, SlidersHorizontal, MessageSquare, Eye, Award } from "lucide-react";
+import { Search, Star, MapPin, Phone, CheckCircle, XCircle, ChevronLeft, ChevronRight, Grid, List, SlidersHorizontal, MessageSquare, Eye, Award, Map as MapIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import Toast from "@/components/Toast";
+
+// Import dynamique de la carte pour éviter les erreurs SSR
+const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
 interface Plumber {
     id: string;
@@ -30,7 +34,7 @@ interface PaginationData {
     totalPages: number;
 }
 
-type ViewMode = 'table' | 'card';
+type ViewMode = 'table' | 'card' | 'map';
 type SortBy = 'createdAt' | 'name' | 'rating';
 type SortOrder = 'asc' | 'desc';
 
@@ -136,7 +140,7 @@ const CardSkeleton = () => (
     </div>
 );
 
-export default function AnnuairePage() {
+function AnnuairePageContent() {
     const searchParams = useSearchParams();
     const [plumbers, setPlumbers] = useState<Plumber[]>([]);
     const [pagination, setPagination] = useState<PaginationData>({
@@ -351,6 +355,7 @@ export default function AnnuairePage() {
                                     ? 'bg-[#008751] text-white'
                                     : 'text-slate-600 hover:bg-slate-100'
                                     }`}
+                                title="Vue liste"
                             >
                                 <List className="w-5 h-5" />
                             </button>
@@ -360,8 +365,19 @@ export default function AnnuairePage() {
                                     ? 'bg-[#008751] text-white'
                                     : 'text-slate-600 hover:bg-slate-100'
                                     }`}
+                                title="Vue cartes"
                             >
                                 <Grid className="w-5 h-5" />
+                            </button>
+                            <button
+                                onClick={() => setViewMode('map')}
+                                className={`px-3 py-2 rounded-md transition-colors ${viewMode === 'map'
+                                    ? 'bg-[#008751] text-white'
+                                    : 'text-slate-600 hover:bg-slate-100'
+                                    }`}
+                                title="Vue carte"
+                            >
+                                <MapIcon className="w-5 h-5" />
                             </button>
                         </div>
                     </div>
@@ -386,7 +402,7 @@ export default function AnnuairePage() {
 
                 {/* Content */}
                 {loading ? (
-                    viewMode === 'table' ? <TableSkeleton /> : <CardSkeleton />
+                    viewMode === 'table' ? <TableSkeleton /> : viewMode === 'card' ? <CardSkeleton /> : <div className="bg-white rounded-xl shadow-md border border-slate-200 h-[600px] animate-pulse"></div>
                 ) : error && plumbers.length === 0 ? (
                     <div className="text-center py-20">
                         <p className="text-slate-600 mb-4">Impossible de charger les plombiers.</p>
@@ -528,7 +544,7 @@ export default function AnnuairePage() {
                             </table>
                         </div>
                     </div>
-                ) : (
+                ) : viewMode === 'card' ? (
                     /* Card View */
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredPlumbers.map((plumber) => (
@@ -648,7 +664,12 @@ export default function AnnuairePage() {
                             </div>
                         ))}
                     </div>
-                )}
+                ) : viewMode === 'map' ? (
+                    /* Map View */
+                    <div className="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200 h-[600px]">
+                        <MapView plumbers={filteredPlumbers} />
+                    </div>
+                ) : null}
 
                 {/* Pagination */}
                 {!loading && (
@@ -842,5 +863,20 @@ export default function AnnuairePage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function AnnuairePage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-slate-600">Chargement...</p>
+                </div>
+            </div>
+        }>
+            <AnnuairePageContent />
+        </Suspense>
     );
 }

@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    logger.info("OTP verified successfully", undefined, {
+    logger.info("OTP verified successfully", {
       userId: session.user.id,
       pinId,
     });

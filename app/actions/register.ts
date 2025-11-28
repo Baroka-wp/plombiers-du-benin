@@ -59,14 +59,14 @@ export async function registerPlumber(prevState: RegisterState, formData: FormDa
 
     // Sanitize all inputs before validation
     const rawData = {
-        nom: sanitizeString(formData.get("nom")),
-        prenom: sanitizeString(formData.get("prenom")),
-        telephone: sanitizePhone(formData.get("telephone")),
-        departement: sanitizeString(formData.get("departement")),
-        ville: sanitizeString(formData.get("ville")),
-        quartier: sanitizeString(formData.get("quartier")),
-        adresse: sanitizeText(formData.get("adresse") || undefined),
-        diplomeAnnee: formData.get("diplomeAnnee"),
+        nom: sanitizeString(formData.get("nom") as string | null),
+        prenom: sanitizeString(formData.get("prenom") as string | null),
+        telephone: sanitizePhone(formData.get("telephone") as string | null),
+        departement: sanitizeString(formData.get("departement") as string | null),
+        ville: sanitizeString(formData.get("ville") as string | null),
+        quartier: sanitizeString(formData.get("quartier") as string | null),
+        adresse: sanitizeText((formData.get("adresse") as string | null) || undefined),
+        diplomeAnnee: formData.get("diplomeAnnee") as string | null,
         diplomeFileUrl: diplomeFile ? "temp" : "", // Temporaire pour la validation
     };
 

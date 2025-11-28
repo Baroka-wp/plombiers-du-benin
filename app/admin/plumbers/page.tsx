@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
@@ -33,7 +33,7 @@ interface Plumber {
   };
 }
 
-export default function AdminPlumbersPage() {
+function AdminPlumbersPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [admin, setAdmin] = useState<any>(null);
@@ -334,6 +334,21 @@ export default function AdminPlumbersPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function AdminPlumbersPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-slate-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600">Chargement...</p>
+        </div>
+      </div>
+    }>
+      <AdminPlumbersPageContent />
+    </Suspense>
   );
 }
 

@@ -31,16 +31,12 @@ export default function AdminLoginPage() {
 
       if (response.ok && data.success) {
         // Stocker les infos admin dans sessionStorage
-        sessionStorage.setItem("admin", JSON.stringify(data.admin));
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("admin", JSON.stringify(data.admin));
+        }
         router.push("/admin/dashboard");
       } else {
         setError(data.error || "Erreur de connexion");
-      }
-
-      if (result?.error) {
-        setError(result.error);
-      } else if (result?.ok) {
-        router.push("/admin/dashboard");
       }
     } catch (err) {
       setError("Une erreur est survenue lors de la connexion");

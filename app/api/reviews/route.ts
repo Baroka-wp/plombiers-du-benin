@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    logger.info("Review created", undefined, {
+    logger.info("Review created", {
       reviewId: review.id,
       plumberId,
       rating,

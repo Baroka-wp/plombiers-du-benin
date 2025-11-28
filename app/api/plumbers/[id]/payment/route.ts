@@ -57,7 +57,7 @@ export async function POST(
             },
         });
 
-        logger.info("Payment processed successfully", undefined, {
+        logger.info("Payment processed successfully", {
             plumberId: id,
             paymentId: payment.id,
             reference: paymentReference

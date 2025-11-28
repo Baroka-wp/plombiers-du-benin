@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    logger.info("OTP sent successfully", undefined, {
+    logger.info("OTP sent successfully", {
       userId: session.user.id,
       phone: cleanedPhone,
       pinId: result.pinId,
