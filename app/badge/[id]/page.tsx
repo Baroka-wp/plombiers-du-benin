@@ -8,6 +8,7 @@ import QRCode from "qrcode";
 import { Plumber, PlumberQRData } from "@/types/plumber";
 import { logger } from "@/lib/logger";
 import html2canvas from "html2canvas";
+import Toast from "@/components/Toast";
 
 // Composant drapeau du Bénin
 const BeninFlag = ({ className = "w-6 h-6" }: { className?: string }) => (
@@ -28,6 +29,7 @@ export default function BadgePage({ params }: { params: Promise<{ id: string }> 
   const [photoUrl, setPhotoUrl] = useState<string>("");
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const badgeRef = useRef<HTMLDivElement>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
   useEffect(() => {
     async function loadPlumber() {
@@ -151,7 +153,7 @@ export default function BadgePage({ params }: { params: Promise<{ id: string }> 
       logger.error("Badge download error", error instanceof Error ? error : new Error(String(error)), {
         plumberId: id,
       });
-      alert("Erreur lors du téléchargement du badge");
+      setToast({ message: "Erreur lors du téléchargement du badge", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -356,6 +358,15 @@ export default function BadgePage({ params }: { params: Promise<{ id: string }> 
           </div>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

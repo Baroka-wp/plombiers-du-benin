@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search, Star, MapPin, Phone, CheckCircle, XCircle, ChevronLeft, ChevronRight, Grid, List, SlidersHorizontal, MessageSquare } from "lucide-react";
 import Image from "next/image";
+import Toast from "@/components/Toast";
 
 interface Plumber {
     id: string;
@@ -157,6 +158,7 @@ export default function AnnuairePage() {
     const [contactForm, setContactForm] = useState({ name: "", phone: "", message: "" });
     const [sendingSMS, setSendingSMS] = useState(false);
     const [smsSuccess, setSmsSuccess] = useState(false);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
     const fetchPlumbers = async (page: number, abortSignal?: AbortSignal) => {
         setLoading(true);
@@ -257,7 +259,7 @@ export default function AnnuairePage() {
                 closeContactModal();
             }, 2000);
         } catch (error) {
-            alert("Erreur lors de l'envoi du message. Veuillez réessayer.");
+            setToast({ message: "Erreur lors de l'envoi du message. Veuillez réessayer", type: "error" });
         } finally {
             setSendingSMS(false);
         }
@@ -791,6 +793,15 @@ export default function AnnuairePage() {
                             )}
                         </div>
                     </div>
+                )}
+
+                {/* Toast Notification */}
+                {toast && (
+                    <Toast
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToast(null)}
+                    />
                 )}
             </div>
         </div>

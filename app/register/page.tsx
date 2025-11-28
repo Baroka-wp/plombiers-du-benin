@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Shield, ArrowLeft, UploadCloud, MapPin, User, CheckCircle, AlertCircle, FileText, ArrowRight } from 'lucide-react';
+import Toast from '@/components/Toast';
 
 // Composant drapeau du Bénin
 const BeninFlag = ({ className = "w-6 h-6" }: { className?: string }) => (
@@ -51,6 +52,7 @@ export default function InscriptionPage() {
     const [uploadError, setUploadError] = useState('');
     const [paymentSuccess, setPaymentSuccess] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -99,7 +101,7 @@ export default function InscriptionPage() {
 
     const handleNext = async () => {
         if (!validateStep()) {
-            alert("Veuillez remplir tous les champs obligatoires.");
+            setToast({ message: "Veuillez remplir tous les champs obligatoires", type: "error" });
             return;
         }
 
@@ -165,7 +167,7 @@ export default function InscriptionPage() {
             setCurrentStep(prev => prev + 1);
         } catch (error) {
             console.error('Error:', error);
-            alert(error instanceof Error ? error.message : 'Une erreur est survenue');
+            setToast({ message: error instanceof Error ? error.message : 'Une erreur est survenue', type: "error" });
         } finally {
             setIsLoading(false);
         }
@@ -177,7 +179,7 @@ export default function InscriptionPage() {
 
     const handlePayment = async () => {
         if (!formData.profilePhotoUrl) {
-            alert("Veuillez charger votre photo de profil.");
+            setToast({ message: "Veuillez charger votre photo de profil", type: "error" });
             return;
         }
 
@@ -214,7 +216,7 @@ export default function InscriptionPage() {
             setShowSuccessModal(true);
         } catch (error) {
             console.error('Payment error:', error);
-            alert(error instanceof Error ? error.message : 'Une erreur est survenue lors du paiement');
+            setToast({ message: error instanceof Error ? error.message : 'Une erreur est survenue lors du paiement', type: "error" });
         } finally {
             setIsLoading(false);
         }
@@ -630,6 +632,15 @@ export default function InscriptionPage() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Toast Notification */}
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
             )}
         </div>
     );

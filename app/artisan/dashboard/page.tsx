@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import Toast from "@/components/Toast";
 
 interface PlumberData {
   id: string;
@@ -75,6 +76,9 @@ export default function ArtisanDashboard() {
   const [verifyingOTP, setVerifyingOTP] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [phoneChanged, setPhoneChanged] = useState(false);
+  
+  // Toast notification state
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -148,9 +152,10 @@ export default function ArtisanDashboard() {
       await loadPlumberData();
       setIsEditing(false);
       setPhoneChanged(false);
+      setToast({ message: "Profil mis à jour avec succès", type: "success" });
     } catch (error) {
       console.error("Error updating plumber:", error);
-      alert("Erreur lors de la mise à jour du profil");
+      setToast({ message: "Erreur lors de la mise à jour du profil", type: "error" });
     } finally {
       setIsSaving(false);
     }
@@ -171,9 +176,9 @@ export default function ArtisanDashboard() {
       }
 
       setOtpSent(true);
-      alert("Code envoyé par SMS !");
+      setToast({ message: "Code envoyé par SMS avec succès !", type: "success" });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Erreur lors de l'envoi du code");
+      setToast({ message: error instanceof Error ? error.message : "Erreur lors de l'envoi du code", type: "error" });
     } finally {
       setSendingOTP(false);
     }
@@ -213,9 +218,9 @@ export default function ArtisanDashboard() {
       setShowOTPVerification(false);
       setIsEditing(false);
       setPhoneChanged(false);
-      alert("Téléphone vérifié et profil mis à jour !");
+      setToast({ message: "Téléphone vérifié et profil mis à jour avec succès !", type: "success" });
     } catch (error) {
-      alert(error instanceof Error ? error.message : "Erreur lors de la vérification");
+      setToast({ message: error instanceof Error ? error.message : "Erreur lors de la vérification", type: "error" });
     } finally {
       setVerifyingOTP(false);
     }
@@ -696,6 +701,15 @@ export default function ArtisanDashboard() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );
