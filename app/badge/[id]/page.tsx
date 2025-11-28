@@ -65,7 +65,7 @@ export default function BadgePage({ params }: { params: Promise<{ id: string }> 
       isVerified: plumber.isVerified,
       hasPaid: plumber.hasPaid,
       membershipId: plumber.membershipId,
-      profileUrl: `${window.location.origin}/annuaire?id=${plumber.id}`,
+      profileUrl: `${window.location.origin}/plumber/${plumber.id}`,
     };
 
     try {

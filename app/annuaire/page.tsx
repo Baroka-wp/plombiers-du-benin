@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, Star, MapPin, Phone, CheckCircle, XCircle, ChevronLeft, ChevronRight, Grid, List, SlidersHorizontal, MessageSquare } from "lucide-react";
+import { Search, Star, MapPin, Phone, CheckCircle, XCircle, ChevronLeft, ChevronRight, Grid, List, SlidersHorizontal, MessageSquare, Eye, Award } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import Toast from "@/components/Toast";
 
 interface Plumber {
@@ -483,13 +484,22 @@ export default function AnnuairePage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <button
-                                                    onClick={() => openContactModal(plumber)}
-                                                    className="inline-flex items-center gap-2 bg-[#008751] hover:bg-[#006b40] text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                                                >
-                                                    <MessageSquare className="w-4 h-4" />
-                                                    Contacter
-                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    <Link
+                                                        href={`/plumber/${plumber.id}`}
+                                                        className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                        Voir profil
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => openContactModal(plumber)}
+                                                        className="inline-flex items-center gap-2 bg-[#008751] hover:bg-[#006b40] text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                                                    >
+                                                        <MessageSquare className="w-4 h-4" />
+                                                        Contacter
+                                                    </button>
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col gap-1">
@@ -529,7 +539,10 @@ export default function AnnuairePage() {
                                 <div className="p-6">
                                     {/* Header */}
                                     <div className="flex items-start gap-4 mb-4">
-                                        <div className="relative w-16 h-16 rounded-full overflow-hidden bg-slate-200 flex-shrink-0">
+                                        <Link
+                                            href={`/plumber/${plumber.id}`}
+                                            className="relative w-16 h-16 rounded-full overflow-hidden bg-slate-200 flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-emerald-500 transition-all"
+                                        >
                                             {plumber.photoUrl ? (
                                                 <Image
                                                     src={plumber.photoUrl}
@@ -542,33 +555,41 @@ export default function AnnuairePage() {
                                                     {plumber.prenom[0]}{plumber.nom[0]}
                                                 </div>
                                             )}
-                                        </div>
+                                        </Link>
                                         <div className="flex-1">
-                                            <h3 className="font-bold text-lg text-slate-900">
-                                                {plumber.prenom} {plumber.nom}
-                                            </h3>
+                                            <Link
+                                                href={`/plumber/${plumber.id}`}
+                                                className="block hover:text-emerald-600 transition-colors"
+                                            >
+                                                <h3 className="font-bold text-lg text-slate-900">
+                                                    {plumber.prenom} {plumber.nom}
+                                                </h3>
+                                            </Link>
                                             {plumber.membershipId && (
                                                 <p className="text-xs text-slate-500">
                                                     ID: {plumber.membershipId}
                                                 </p>
                                             )}
                                             {/* Rating */}
-                                            <div className="flex items-center gap-1 mt-1">
+                                            <Link
+                                                href={`/plumber/${plumber.id}`}
+                                                className="flex items-center gap-1 mt-1 hover:opacity-80 transition-opacity"
+                                            >
                                                 <Star className="w-4 h-4 text-[#FCD116] fill-[#FCD116]" />
                                                 <span className="font-semibold text-slate-900">
                                                     {plumber.averageRating > 0
                                                         ? plumber.averageRating.toFixed(1)
-                                                        : "N/A"}
+                                                        : "Nouveau"}
                                                 </span>
                                                 <span className="text-xs text-slate-500">
-                                                    ({plumber.reviewCount})
+                                                    ({plumber.reviewCount} avis)
                                                 </span>
-                                            </div>
+                                            </Link>
                                         </div>
                                     </div>
 
                                     {/* Location */}
-                                    <div className="flex items-start gap-2 mb-3">
+                                    <div className="flex items-start gap-2 mb-4">
                                         <MapPin className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
                                         <div className="text-sm">
                                             <p className="text-slate-900 font-medium">{plumber.ville}</p>
@@ -576,15 +597,31 @@ export default function AnnuairePage() {
                                         </div>
                                     </div>
 
-                                    {/* Contact Button */}
-                                    <div className="mb-4">
-                                        <button
-                                            onClick={() => openContactModal(plumber)}
-                                            className="flex items-center justify-center gap-2 bg-[#008751] hover:bg-[#006b40] text-white px-4 py-2.5 rounded-lg font-bold transition-colors w-full"
+                                    {/* Action Buttons */}
+                                    <div className="space-y-2 mb-4">
+                                        <Link
+                                            href={`/plumber/${plumber.id}`}
+                                            className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg font-bold transition-colors w-full"
                                         >
-                                            <MessageSquare className="w-4 h-4" />
-                                            Contacter par SMS
-                                        </button>
+                                            <Eye className="w-4 h-4" />
+                                            Voir le profil
+                                        </Link>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <Link
+                                                href={`/plumber/${plumber.id}`}
+                                                className="flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-500 text-slate-900 px-3 py-2 rounded-lg font-semibold transition-colors text-sm"
+                                            >
+                                                <Award className="w-4 h-4" />
+                                                Noter
+                                            </Link>
+                                            <button
+                                                onClick={() => openContactModal(plumber)}
+                                                className="flex items-center justify-center gap-2 bg-[#008751] hover:bg-[#006b40] text-white px-3 py-2 rounded-lg font-semibold transition-colors text-sm"
+                                            >
+                                                <MessageSquare className="w-4 h-4" />
+                                                SMS
+                                            </button>
+                                        </div>
                                     </div>
 
                                     {/* Status Badges */}

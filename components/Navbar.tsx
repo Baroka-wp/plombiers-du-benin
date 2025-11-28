@@ -29,9 +29,6 @@ export default function Navbar() {
                     <Link href="/annuaire" className="text-gray-600 hover:text-emerald-700 font-medium transition">
                         Annuaire
                     </Link>
-                    <Link href="#" className="text-gray-600 hover:text-emerald-700 font-medium transition">
-                        Vérifier un Badge
-                    </Link>
                     <Link
                         href="/artisan/login"
                         className="text-emerald-700 font-bold hover:bg-emerald-50 px-4 py-2 rounded-lg transition"
@@ -67,13 +64,6 @@ export default function Navbar() {
                             onClick={() => setIsMenuOpen(false)}
                         >
                             Annuaire
-                        </Link>
-                        <Link
-                            href="#"
-                            className="block px-3 py-3 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 rounded-lg font-medium"
-                            onClick={() => setIsMenuOpen(false)}
-                        >
-                            Vérifier un Badge
                         </Link>
                         <div className="border-t border-gray-100 my-2 pt-2">
                             <Link
