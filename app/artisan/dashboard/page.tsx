@@ -16,6 +16,7 @@ import {
   CheckCircle,
   Download,
   FileText,
+  MessageSquare,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -66,7 +67,7 @@ export default function ArtisanDashboard() {
     ville: "",
     quartier: "",
   });
-  
+
   // OTP verification state
   const [showOTPVerification, setShowOTPVerification] = useState(false);
   const [otpCode, setOtpCode] = useState("");
@@ -591,11 +592,10 @@ export default function ArtisanDashboard() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-600">Vérification</span>
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      plumber.isVerified
-                        ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
+                    className={`px-3 py-1 rounded-full text-xs font-bold ${plumber.isVerified
+                      ? "bg-green-100 text-green-800"
+                      : "bg-yellow-100 text-yellow-800"
+                      }`}
                   >
                     {plumber.isVerified ? "Vérifié" : "En attente"}
                   </span>
@@ -603,11 +603,10 @@ export default function ArtisanDashboard() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-slate-600">Paiement</span>
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      plumber.hasPaid
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
+                    className={`px-3 py-1 rounded-full text-xs font-bold ${plumber.hasPaid
+                      ? "bg-blue-100 text-blue-800"
+                      : "bg-yellow-100 text-yellow-800"
+                      }`}
                   >
                     {plumber.hasPaid ? "Payé" : "En attente"}
                   </span>
