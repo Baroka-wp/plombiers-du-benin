@@ -941,7 +941,7 @@ export default function ArtisanDashboard() {
                         )}
                       </div>
                       <p className="text-sm text-slate-600 mt-1">
-                        {Math.round(pkg.price / pkg.credits)} FCFA par crédit
+                        {Math.round(pkg.price / pkg.credits)} FCFA / SMS
                       </p>
                     </div>
                     <div className="text-right">
