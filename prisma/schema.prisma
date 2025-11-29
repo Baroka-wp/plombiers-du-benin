@@ -30,6 +30,9 @@ model Plumber {
   isVerified   Boolean @default(false)
   hasPaid      Boolean @default(false)
   membershipId String? @unique
+  
+  // Crédits SMS
+  smsCredits   Int     @default(10) // Crédits SMS pour recevoir les contacts clients
 
   // Relations
   payments        Payment[]

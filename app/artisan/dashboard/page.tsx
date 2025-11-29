@@ -36,6 +36,7 @@ interface PlumberData {
   hasPaid: boolean;
   membershipId: string | null;
   diplomeFileUrl: string;
+  smsCredits: number;
 }
 
 const LOCATIONS: Record<string, string[]> = {
@@ -360,7 +361,7 @@ export default function ArtisanDashboard() {
         </div>
 
         {/* KPIs Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -393,6 +394,49 @@ export default function ArtisanDashboard() {
                 </div>
                 <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
                   <Shield className="w-6 h-6 text-orange-600" />
+                </div>
+              </div>
+            </div>
+            <div className={`bg-white rounded-xl shadow-md border-2 p-6 ${
+              plumber.smsCredits === 0 
+                ? 'border-red-300 bg-red-50' 
+                : plumber.smsCredits < 5 
+                ? 'border-yellow-300 bg-yellow-50' 
+                : 'border-slate-200'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600 mb-1">Crédits SMS</p>
+                  <p className={`text-3xl font-bold ${
+                    plumber.smsCredits === 0 
+                      ? 'text-red-600' 
+                      : plumber.smsCredits < 5 
+                      ? 'text-yellow-600' 
+                      : 'text-slate-900'
+                  }`}>
+                    {plumber.smsCredits}
+                  </p>
+                  {plumber.smsCredits === 0 && (
+                    <p className="text-xs text-red-600 mt-1 font-medium">Rechargez maintenant</p>
+                  )}
+                  {plumber.smsCredits > 0 && plumber.smsCredits < 5 && (
+                    <p className="text-xs text-yellow-600 mt-1 font-medium">Bientôt épuisé</p>
+                  )}
+                </div>
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                  plumber.smsCredits === 0 
+                    ? 'bg-red-100' 
+                    : plumber.smsCredits < 5 
+                    ? 'bg-yellow-100' 
+                    : 'bg-blue-100'
+                }`}>
+                  <Phone className={`w-6 h-6 ${
+                    plumber.smsCredits === 0 
+                      ? 'text-red-600' 
+                      : plumber.smsCredits < 5 
+                      ? 'text-yellow-600' 
+                      : 'text-blue-600'
+                  }`} />
                 </div>
               </div>
             </div>
@@ -730,6 +774,23 @@ export default function ArtisanDashboard() {
                       }`}
                   >
                     {plumber.hasPaid ? "Payé" : "En attente"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-slate-200">
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-slate-600" />
+                    <span className="text-sm text-slate-600">Crédits SMS</span>
+                  </div>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      plumber.smsCredits === 0
+                        ? "bg-red-100 text-red-800"
+                        : plumber.smsCredits < 5
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-emerald-100 text-emerald-800"
+                    }`}
+                  >
+                    {plumber.smsCredits} crédit{plumber.smsCredits > 1 ? 's' : ''}
                   </span>
                 </div>
               </div>

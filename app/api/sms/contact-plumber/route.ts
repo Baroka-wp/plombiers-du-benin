@@ -15,13 +15,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get plumber data
+    // Get plumber data avec crédits SMS
     const plumber = await prisma.plumber.findUnique({
       where: { id: plumberId },
       select: {
         prenom: true,
         nom: true,
         telephone: true,
+        smsCredits: true,
       },
     });
 
@@ -32,11 +33,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Vérifier les crédits SMS
+    if (plumber.smsCredits <= 0) {
+      // Envoyer un SMS d'alerte pour informer le plombier qu'il doit recharger
+      const alertMessage = `⚠️ Vos crédits SMS sont épuisés. Rechargez votre compte pour continuer à recevoir des demandes de clients. Annuaire des Plombiers du Bénin.`;
+      await smsService.sendSMS(plumber.telephone, alertMessage);
+      
+      return NextResponse.json(
+        { 
+          error: "Crédits SMS épuisés. Le plombier a été notifié pour recharger son compte.",
+          smsCredits: 0
+        },
+        { status: 402 } // 402 Payment Required
+      );
+    }
+
     // Format message selon le plan
     const smsMessage = `Bonjour, je recherche un plombier. Veuillez me recontacter au ${clientPhone}. ${clientName}.${message ? ` ${message}` : ""}`;
 
     // Envoyer le SMS au plombier via ClickSend
     const smsResult = await smsService.sendSMS(plumber.telephone, smsMessage);
+
+    // Décrémenter les crédits seulement si l'envoi a réussi
+    if (smsResult.success) {
+      const newCredits = plumber.smsCredits - 1;
+      
+      // Mettre à jour les crédits
+      await prisma.plumber.update({
+        where: { id: plumberId },
+        data: { smsCredits: newCredits },
+      });
+
+      // Envoyer un SMS d'alerte si crédits faibles (< 5)
+      if (newCredits > 0 && newCredits < 5) {
+        const lowCreditsMessage = `⚠️ Attention: Il vous reste ${newCredits} crédit${newCredits > 1 ? 's' : ''} SMS. Rechargez votre compte pour ne pas rater des clients. Annuaire des Plombiers du Bénin.`;
+        // Envoyer l'alerte en arrière-plan (ne pas bloquer la réponse)
+        smsService.sendSMS(plumber.telephone, lowCreditsMessage).catch(err => {
+          logger.warn("Failed to send low credits alert", err instanceof Error ? err : new Error(String(err)), {
+            plumberId,
+          });
+        });
+      }
+    }
 
     // Vérifier que le modèle ContactRequest est disponible
     if (!prisma.contactRequest) {
