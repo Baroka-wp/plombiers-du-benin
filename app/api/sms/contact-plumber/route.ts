@@ -32,27 +32,64 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Format message - use Termii OTP to send as regular SMS isn't their main feature
-    // For production, you might want to use Termii's generic SMS API instead
-    const smsMessage = `Nouvelle demande: ${clientName} (${clientPhone}) souhaite vous contacter. ${message || ""}`;
+    // Format message selon le plan
+    const smsMessage = `Bonjour, je recherche un plombier. Veuillez me recontacter au ${clientPhone}. ${clientName}.${message ? ` ${message}` : ""}`;
 
-    // Note: Termii OTP API is meant for verification codes
-    // For contact messages, consider using their generic SMS endpoint:
-    // POST https://api.ng.termii.com/api/sms/send
-    // For now, we'll log this and return success
+    // Envoyer le SMS au plombier via ClickSend
+    const smsResult = await smsService.sendSMS(plumber.telephone, smsMessage);
+
+    // Vérifier que le modèle ContactRequest est disponible
+    if (!prisma.contactRequest) {
+      logger.error("Prisma ContactRequest model not available", new Error("Model not found"), {
+        plumberId,
+        clientName,
+        clientPhone,
+      });
+      // On retourne quand même un succès car le SMS a été envoyé
+      return NextResponse.json({
+        success: true,
+        message: "SMS envoyé avec succès. La prise de contact n'a pas pu être enregistrée.",
+        smsSent: smsResult.success,
+      });
+    }
+
+    // Sauvegarder la prise de contact dans la base de données
+    const contactRequest = await prisma.contactRequest.create({
+      data: {
+        plumberId,
+        clientName,
+        clientPhone,
+        message: message || null,
+      },
+    });
+
+    if (!smsResult.success) {
+      logger.warn("Failed to send SMS to plumber", undefined, {
+        plumberId,
+        plumberName: `${plumber.prenom} ${plumber.nom}`,
+        clientName,
+        clientPhone,
+        error: smsResult.error,
+        contactRequestId: contactRequest.id,
+      });
+      
+      // On continue même si l'SMS échoue, on enregistre quand même la demande
+    }
     
     logger.info("Contact request", {
       plumberId,
       plumberName: `${plumber.prenom} ${plumber.nom}`,
       clientName,
       clientPhone,
+      smsSent: smsResult.success,
+      contactRequestId: contactRequest.id,
     });
 
-    // TODO: Implement generic SMS sending via Termii
-    // For now, return success without actually sending
     return NextResponse.json({
       success: true,
       message: "Demande enregistrée avec succès",
+      smsSent: smsResult.success,
+      contactRequestId: contactRequest.id,
     });
   } catch (error) {
     logger.error("Contact plumber error", error instanceof Error ? error : new Error(String(error)));

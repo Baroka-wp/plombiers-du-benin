@@ -215,7 +215,7 @@ export default function RGPDPage() {
                 Vos données personnelles peuvent être partagées avec :
               </p>
               <ul className="list-disc list-inside space-y-2 text-slate-700">
-                <li><strong>Prestataires de services</strong> : Hébergement (Vercel), base de données (Neon), stockage d'images (Cloudinary), SMS (Termii)</li>
+                <li><strong>Prestataires de services</strong> : Hébergement (Vercel), base de données (Neon), stockage d'images (Cloudinary), SMS (ClickSend)</li>
                 <li><strong>Autorités compétentes</strong> : En cas d'obligation légale ou de demande judiciaire</li>
                 <li><strong>Utilisateurs publics</strong> : Nom, prénom, localisation et photo (pour les artisans dans l'annuaire public)</li>
               </ul>

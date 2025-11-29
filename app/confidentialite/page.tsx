@@ -124,7 +124,7 @@ export default function ConfidentialitePage() {
                   <li>Hébergement (Vercel) - pour le fonctionnement de la plateforme</li>
                   <li>Base de données (Neon) - pour le stockage sécurisé</li>
                   <li>Stockage d'images (Cloudinary) - pour vos photos et documents</li>
-                  <li>Service SMS (Termii) - pour l'envoi de notifications</li>
+                  <li>Service SMS (ClickSend) - pour l'envoi de notifications</li>
                 </ul>
                 <p className="text-slate-700 mt-3">
                   Tous nos prestataires sont soumis à des obligations strictes de confidentialité et de sécurité.

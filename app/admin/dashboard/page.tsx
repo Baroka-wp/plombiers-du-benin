@@ -16,6 +16,7 @@ import {
   BarChart3,
   ArrowRight,
   RefreshCw,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -30,9 +31,11 @@ interface Stats {
     totalReviews: number;
     averageRating: number;
     totalRevenue: number;
+    totalContactRequests: number;
   };
   recentPlumbers: any[];
   recentPayments: any[];
+  recentContactRequests: any[];
   byDepartment: { departement: string; _count: { id: number } }[];
   byCity: { ville: string; _count: { id: number } }[];
 }
@@ -143,6 +146,12 @@ export default function AdminDashboard() {
       value: `${(overview.totalRevenue / 100).toLocaleString()} FCFA`,
       icon: TrendingUp,
       color: "bg-indigo-500",
+    },
+    {
+      title: "Prises de contact",
+      value: overview.totalContactRequests,
+      icon: MessageSquare,
+      color: "bg-pink-500",
     },
   ];
 
@@ -286,6 +295,53 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Recent Contact Requests */}
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-slate-900">Prises de contact récentes</h2>
+            </div>
+            <div className="space-y-3">
+              {stats.recentContactRequests && stats.recentContactRequests.length > 0 ? (
+                stats.recentContactRequests.map((contact: any) => (
+                  <div
+                    key={contact.id}
+                    className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                  >
+                    <div>
+                      <p className="font-medium text-slate-900">
+                        {contact.clientName}
+                      </p>
+                      <p className="text-sm text-slate-600">
+                        {contact.clientPhone}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Plombier: {contact.plumber.prenom} {contact.plumber.nom}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {new Date(contact.createdAt).toLocaleDateString("fr-FR", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                      {contact.message && (
+                        <p className="text-sm text-slate-700 mt-1 italic">
+                          "{contact.message}"
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-500 text-center py-4">
+                  Aucune prise de contact récente
+                </p>
+              )}
             </div>
           </div>
         </div>

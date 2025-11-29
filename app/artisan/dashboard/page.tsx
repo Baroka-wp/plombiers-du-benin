@@ -60,6 +60,12 @@ export default function ArtisanDashboard() {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [stats, setStats] = useState<{
+    totalContactRequests: number;
+    recentContactRequests: any[];
+    reviewCount: number;
+    averageRating: number;
+  } | null>(null);
   const [editForm, setEditForm] = useState({
     nom: "",
     prenom: "",
@@ -76,7 +82,9 @@ export default function ArtisanDashboard() {
   const [verifyingOTP, setVerifyingOTP] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [phoneChanged, setPhoneChanged] = useState(false);
-  const [otpPinId, setOtpPinId] = useState<string | null>(null); // Termii pinId
+  const [otpPinId, setOtpPinId] = useState<string | null>(null); // ClickSend OTP ID
+  const [otpExpiresAt, setOtpExpiresAt] = useState<Date | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState<string>("05:00");
 
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
@@ -88,6 +96,33 @@ export default function ArtisanDashboard() {
       loadPlumberData();
     }
   }, [status, session, router]);
+
+  // Timer pour le décompte OTP
+  useEffect(() => {
+    if (!otpExpiresAt || !otpSent) {
+      setTimeRemaining("05:00");
+      return;
+    }
+
+    const updateTimer = () => {
+      const now = new Date();
+      const diff = otpExpiresAt.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        setTimeRemaining("00:00");
+        return;
+      }
+
+      const minutes = Math.floor(diff / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      setTimeRemaining(`${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [otpExpiresAt, otpSent]);
 
   const loadPlumberData = async () => {
     try {
@@ -104,6 +139,33 @@ export default function ArtisanDashboard() {
         ville: data.ville,
         quartier: data.quartier,
       });
+
+      // Charger les statistiques
+      try {
+        const statsResponse = await fetch(`/api/plumbers/${session?.user?.id}/stats`);
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json();
+          setStats(statsData);
+        } else {
+          console.error("Failed to load stats:", statsResponse.status);
+          // Initialiser avec des valeurs par défaut
+          setStats({
+            totalContactRequests: 0,
+            recentContactRequests: [],
+            reviewCount: 0,
+            averageRating: 0,
+          });
+        }
+      } catch (error) {
+        console.error("Error loading stats:", error);
+        // Initialiser avec des valeurs par défaut en cas d'erreur
+        setStats({
+          totalContactRequests: 0,
+          recentContactRequests: [],
+          reviewCount: 0,
+          averageRating: 0,
+        });
+      }
     } catch (error) {
       console.error("Error loading plumber:", error);
     } finally {
@@ -177,9 +239,13 @@ export default function ArtisanDashboard() {
         throw new Error(data.error || "Erreur lors de l'envoi");
       }
 
-      // Stocker le pinId de Termii pour vérification
+      // Stocker l'ID OTP de ClickSend pour vérification
       setOtpPinId(data.pinId);
       setOtpSent(true);
+      // Définir l'expiration à 5 minutes
+      const expiresAt = new Date();
+      expiresAt.setMinutes(expiresAt.getMinutes() + 5);
+      setOtpExpiresAt(expiresAt);
       setToast({ message: "Code envoyé par SMS avec succès !", type: "success" });
     } catch (error) {
       setToast({ message: error instanceof Error ? error.message : "Erreur lors de l'envoi du code", type: "error" });
@@ -208,13 +274,15 @@ export default function ArtisanDashboard() {
         throw new Error(data.error || "Code invalide");
       }
 
-      // Update other fields
+      // Update all fields including telephone after OTP verification
       const updateResponse = await fetch(`/api/plumbers/${session?.user?.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nom: editForm.nom,
           prenom: editForm.prenom,
+          telephone: editForm.telephone, // Include telephone after OTP verification
+          phoneVerified: true, // Mark phone as verified after successful OTP verification
           departement: editForm.departement,
           ville: editForm.ville,
           quartier: editForm.quartier,
@@ -290,6 +358,45 @@ export default function ArtisanDashboard() {
             Gérez votre profil professionnel et vos informations
           </p>
         </div>
+
+        {/* KPIs Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600 mb-1">Prises de contact</p>
+                  <p className="text-3xl font-bold text-slate-900">{stats?.totalContactRequests ?? 0}</p>
+                </div>
+                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <MessageSquare className="w-6 h-6 text-emerald-600" />
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600 mb-1">Avis clients</p>
+                  <p className="text-3xl font-bold text-slate-900">{stats?.reviewCount ?? 0}</p>
+                </div>
+                <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-yellow-600" />
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600 mb-1">Note moyenne</p>
+                  <p className="text-3xl font-bold text-slate-900">
+                    {stats && stats.averageRating > 0 ? stats.averageRating.toFixed(1) : "—"}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-orange-600" />
+                </div>
+              </div>
+            </div>
+          </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Profile Card */}
@@ -627,6 +734,53 @@ export default function ArtisanDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Contact Requests Statistics */}
+            {stats && (
+              <div className="bg-white rounded-xl shadow-md border border-slate-200 p-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-emerald-600" />
+                  Prises de contact ({stats.totalContactRequests})
+                </h3>
+                {stats.recentContactRequests && stats.recentContactRequests.length > 0 ? (
+                  <div className="space-y-3">
+                    {stats.recentContactRequests.map((contact: any) => (
+                      <div
+                        key={contact.id}
+                        className="p-4 bg-slate-50 rounded-lg border border-slate-200"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <p className="font-medium text-slate-900">{contact.clientName}</p>
+                            <p className="text-sm text-slate-600 flex items-center gap-2 mt-1">
+                              <Phone className="w-4 h-4" />
+                              {contact.clientPhone}
+                            </p>
+                          </div>
+                          <span className="text-xs text-slate-500">
+                            {new Date(contact.createdAt).toLocaleDateString("fr-FR", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                        {contact.message && (
+                          <p className="text-sm text-slate-700 mt-2 italic border-t border-slate-200 pt-2">
+                            "{contact.message}"
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500 text-center py-4">
+                    Aucune prise de contact pour le moment
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -677,6 +831,11 @@ export default function ArtisanDashboard() {
                   <p className="text-xs text-slate-500 mt-2 text-center">
                     Code valide pendant 5 minutes
                   </p>
+                  <div className="text-center mt-2">
+                    <span className={`text-sm font-bold ${timeRemaining === "00:00" ? "text-red-600" : "text-emerald-600"}`}>
+                      {timeRemaining === "00:00" ? "Code expiré" : `Temps restant: ${timeRemaining}`}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex gap-3">
@@ -689,7 +848,7 @@ export default function ArtisanDashboard() {
                   </button>
                   <button
                     onClick={handleVerifyOTP}
-                    disabled={verifyingOTP || otpCode.length !== 6}
+                    disabled={verifyingOTP || otpCode.length !== 6 || timeRemaining === "00:00"}
                     className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-bold transition-colors"
                   >
                     {verifyingOTP ? "Vérification..." : "Vérifier"}
@@ -703,6 +862,8 @@ export default function ArtisanDashboard() {
                 setShowOTPVerification(false);
                 setOtpSent(false);
                 setOtpCode("");
+                setOtpExpiresAt(null);
+                setTimeRemaining("05:00");
               }}
               className="w-full mt-4 text-slate-600 hover:text-slate-800 py-2 text-sm font-medium"
             >

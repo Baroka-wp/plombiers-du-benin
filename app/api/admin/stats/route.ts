@@ -19,8 +19,10 @@ export async function GET(request: NextRequest) {
       successfulPayments,
       totalReviews,
       averageRating,
+      totalContactRequests,
       recentPlumbers,
       recentPayments,
+      recentContactRequests,
     ] = await Promise.all([
       prisma.plumber.count(),
       prisma.plumber.count({ where: { isVerified: true } }),
@@ -32,6 +34,7 @@ export async function GET(request: NextRequest) {
       prisma.review.aggregate({
         _avg: { rating: true },
       }),
+      prisma.contactRequest.count(),
       prisma.plumber.findMany({
         take: 5,
         orderBy: { createdAt: "desc" },
@@ -48,6 +51,19 @@ export async function GET(request: NextRequest) {
         },
       }),
       prisma.payment.findMany({
+        take: 10,
+        orderBy: { createdAt: "desc" },
+        include: {
+          plumber: {
+            select: {
+              nom: true,
+              prenom: true,
+              telephone: true,
+            },
+          },
+        },
+      }),
+      prisma.contactRequest.findMany({
         take: 10,
         orderBy: { createdAt: "desc" },
         include: {
@@ -108,9 +124,11 @@ export async function GET(request: NextRequest) {
         totalReviews,
         averageRating: averageRating._avg.rating || 0,
         totalRevenue: totalRevenue._sum.amount || 0,
+        totalContactRequests,
       },
       recentPlumbers,
       recentPayments,
+      recentContactRequests,
       byDepartment: plumbersByDepartment,
       byCity: plumbersByCity,
       paymentsByMonth: paymentsByMonth.map((p) => ({

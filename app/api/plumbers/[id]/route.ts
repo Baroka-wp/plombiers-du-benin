@@ -60,7 +60,7 @@ export async function PATCH(
     try {
         const { id } = await params;
         const body = await request.json();
-        const { diplomeFileUrl, photoUrl, nom, prenom, telephone, departement, ville, quartier } = body;
+        const { diplomeFileUrl, photoUrl, nom, prenom, telephone, phoneVerified, departement, ville, quartier } = body;
 
         // Check if plumber exists
         const existingPlumber = await prisma.plumber.findUnique({
@@ -98,6 +98,9 @@ export async function PATCH(
                 );
             }
             updateData.telephone = cleanedPhone;
+        }
+        if (phoneVerified !== undefined) {
+            updateData.phoneVerified = phoneVerified;
         }
         if (departement !== undefined) {
             updateData.departement = departement;

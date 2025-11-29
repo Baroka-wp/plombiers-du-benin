@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify OTP via Termii
+    // Verify OTP via ClickSend
     const result = await smsService.verifyOTP(pinId, code);
 
     if (!result.success) {

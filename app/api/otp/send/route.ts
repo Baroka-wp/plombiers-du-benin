@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send OTP via Termii
+    // Send OTP via ClickSend
     const result = await smsService.sendOTP(cleanedPhone);
 
     if (!result.success) {

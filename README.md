@@ -83,9 +83,10 @@ plombier-benin/
    NEXTAUTH_URL="http://localhost:3000"
    NEXTAUTH_SECRET="your-secret-key-here" # Générer avec: openssl rand -base64 32
    
-   # Termii SMS (pour la vérification OTP)
-   TERMII_API_KEY="your_termii_api_key"
-   TERMII_SENDER_ID="N-Alert" # Optionnel, par défaut "N-Alert"
+   # ClickSend SMS (pour l'envoi de SMS et OTP)
+   CLICKSEND_USERNAME="your_clicksend_username"
+   CLICKSEND_API_KEY="your_clicksend_api_key"
+   CLICKSEND_SENDER_ID="Plombier" # Optionnel, par défaut "Plombier"
    
    # Cloudinary
    NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="your_upload_preset_name"
@@ -159,8 +160,9 @@ plombier-benin/
 - `DATABASE_URL` : URL de connexion PostgreSQL
 - `NEXTAUTH_URL` : URL de base de l'application (ex: `http://localhost:3000` en dev, `https://yourdomain.com` en prod)
 - `NEXTAUTH_SECRET` : Clé secrète pour NextAuth (générer avec `openssl rand -base64 32`)
-- `TERMII_API_KEY` : Clé API Termii pour l'envoi de SMS OTP (voir `TERMII_GUIDE.md`)
-- `TERMII_SENDER_ID` : ID de l'expéditeur SMS (optionnel, par défaut "N-Alert")
+- `CLICKSEND_USERNAME` : Nom d'utilisateur ClickSend (votre email ClickSend)
+- `CLICKSEND_API_KEY` : Clé API ClickSend pour l'envoi de SMS
+- `CLICKSEND_SENDER_ID` : ID de l'expéditeur SMS (optionnel, par défaut "Plombier")
 - `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` : Preset Cloudinary
 - `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` : Nom du cloud Cloudinary
 

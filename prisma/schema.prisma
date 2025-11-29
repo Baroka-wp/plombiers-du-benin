@@ -10,58 +10,215 @@ datasource db {
 }
 
 model Plumber {
-  id            String   @id @default(uuid())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  nom           String
-  prenom        String
-  telephone     String   @unique
-  phoneVerified Boolean  @default(false)
-  password      String?
-  diplomeAnnee  Int
+  id             String   @id @default(uuid())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  nom            String
+  prenom         String
+  telephone      String   @unique
+  phoneVerified  Boolean  @default(false)
+  password       String?
+  diplomeAnnee   Int
   diplomeFileUrl String
-  photoUrl      String?
-  departement   String
-  ville         String
-  quartier      String
-  adresse       String?
+  photoUrl       String?
+  departement    String
+  ville          String
+  quartier       String
+  adresse        String?
 
   // Statut & Paiement
-  isVerified    Boolean  @default(false)
-  hasPaid       Boolean  @default(false)
-  membershipId  String?  @unique 
+  isVerified   Boolean @default(false)
+  hasPaid      Boolean @default(false)
+  membershipId String? @unique
 
   // Relations
-  payments      Payment[]
-  reviews       Review[]
+  payments        Payment[]
+  reviews         Review[]
+  favorites       Favorite[]
+  quotes          Quote[]
+  contactRequests ContactRequest[]
 }
 
 model Payment {
-  id            String   @id @default(uuid())
-  amount        Int
-  reference     String   @unique
-  status        String
-  plumberId     String
-  plumber       Plumber  @relation(fields: [plumberId], references: [id])
-  createdAt     DateTime @default(now())
+  id        String   @id @default(uuid())
+  amount    Int
+  reference String   @unique
+  status    String
+  plumberId String
+  plumber   Plumber  @relation(fields: [plumberId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 model Review {
-  id            String   @id @default(uuid())
-  rating        Int
-  comment       String?
-  clientPhone   String?
-  plumberId     String
-  plumber       Plumber  @relation(fields: [plumberId], references: [id])
-  createdAt     DateTime @default(now())
+  id          String   @id @default(uuid())
+  rating      Int
+  comment     String?
+  clientPhone String?
+  plumberId   String
+  plumber     Plumber  @relation(fields: [plumberId], references: [id])
+  createdAt   DateTime @default(now())
 }
 
 model Admin {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  password      String
-  name          String
-  role          String   @default("admin") // admin, super_admin
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin") // admin, super_admin
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Répertoire des Prix - Modèles
+
+model Category {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  slug        String     @unique
+  description String?
+  parentId    String?
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Category[] @relation("CategoryHierarchy")
+  icon        String?
+  order       Int        @default(0)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  parts       Part[]
+
+  @@index([parentId])
+}
+
+model Part {
+  id          String      @id @default(uuid())
+  name        String
+  slug        String      @unique
+  description String?     @db.Text
+  reference   String?
+  brand       String?
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  imageUrl    String?
+  unit        String      @default("pièce") // "pièce", "mètre", "kg", etc.
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  prices      Price[]
+  favorites   Favorite[]
+  quoteItems  QuoteItem[]
+  // Note: Fulltext index not supported in Prisma for PostgreSQL, consider using pg_trgm extension
+  // @@index([name, description, reference, brand], type: Fulltext)
+
+  @@index([categoryId, isActive])
+  @@index([slug])
+}
+
+model Supplier {
+  id          String   @id @default(uuid())
+  name        String
+  type        String // "magasin", "fournisseur", "détaillant"
+  phone       String
+  email       String?
+  address     String
+  departement String
+  ville       String
+  quartier    String?
+  latitude    Float?
+  longitude   Float?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  prices      Price[]
+
+  @@index([departement, ville])
+  @@index([latitude, longitude])
+}
+
+model Price {
+  id         String    @id @default(uuid())
+  partId     String
+  part       Part      @relation(fields: [partId], references: [id], onDelete: Cascade)
+  supplierId String
+  supplier   Supplier  @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  price      Decimal   @db.Decimal(10, 2)
+  isCurrent  Boolean   @default(true)
+  validFrom  DateTime  @default(now())
+  validUntil DateTime?
+  notes      String?   @db.Text
+  createdBy  String // Admin ID
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([partId, isCurrent])
+  @@index([supplierId, isCurrent])
+  @@index([partId, supplierId, isCurrent])
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  plumberId String
+  plumber   Plumber  @relation(fields: [plumberId], references: [id], onDelete: Cascade)
+  partId    String
+  part      Part     @relation(fields: [partId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([plumberId, partId])
+}
+
+model Quote {
+  id          String      @id @default(uuid())
+  plumberId   String
+  plumber     Plumber     @relation(fields: [plumberId], references: [id], onDelete: Cascade)
+  clientName  String
+  clientPhone String?
+  totalParts  Decimal     @db.Decimal(10, 2)
+  laborCost   Decimal?    @db.Decimal(10, 2)
+  total       Decimal     @db.Decimal(10, 2)
+  status      String      @default("draft") // "draft", "sent", "accepted", "rejected"
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  items       QuoteItem[]
+
+  @@index([plumberId])
+  @@index([status])
+}
+
+model QuoteItem {
+  id        String  @id @default(uuid())
+  quoteId   String
+  quote     Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  partId    String
+  part      Part    @relation(fields: [partId], references: [id])
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  total     Decimal @db.Decimal(10, 2)
+  notes     String? @db.Text
+
+  @@index([quoteId])
+  @@index([partId])
+}
+
+model OtpCode {
+  id        String   @id @default(uuid())
+  phone     String
+  code      String
+  expiresAt DateTime
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([phone, verified])
+  @@index([expiresAt])
+}
+
+model ContactRequest {
+  id          String   @id @default(uuid())
+  plumberId   String
+  plumber     Plumber  @relation(fields: [plumberId], references: [id], onDelete: Cascade)
+  clientName  String
+  clientPhone String
+  message     String?
+  createdAt   DateTime @default(now())
+
+  @@index([plumberId])
+  @@index([createdAt])
 }

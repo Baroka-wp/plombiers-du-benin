@@ -59,6 +59,11 @@ export default function PlumberProfilePage({
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [submittingContact, setSubmittingContact] = useState(false);
+  const [contactName, setContactName] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
 
   useEffect(() => {
     fetchPlumber();
@@ -130,6 +135,55 @@ export default function PlumberProfilePage({
       alert("Erreur lors de l'envoi de l'avis");
     } finally {
       setSubmittingReview(false);
+    }
+  };
+
+  const handleSubmitContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!contactName.trim() || !contactPhone.trim()) {
+      alert("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+
+    // Validation du format du téléphone
+    const cleanedPhone = contactPhone.replace(/\s/g, '');
+    if (!/^[0-9]{8}$/.test(cleanedPhone) && !/^[0-9]{10}$/.test(cleanedPhone)) {
+      alert("Le numéro de téléphone doit contenir 8 ou 10 chiffres");
+      return;
+    }
+
+    setSubmittingContact(true);
+    try {
+      const response = await fetch("/api/sms/contact-plumber", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plumberId: id,
+          clientName: contactName.trim(),
+          clientPhone: cleanedPhone,
+          message: contactMessage.trim() || null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccessMessage("Votre demande a été envoyée avec succès ! Le plombier vous contactera bientôt.");
+        setContactName("");
+        setContactPhone("");
+        setContactMessage("");
+        setShowContactForm(false);
+        
+        // Masquer le message après 5 secondes
+        setTimeout(() => setSuccessMessage(""), 5000);
+      } else {
+        alert(data.error || "Erreur lors de l'envoi de la demande");
+      }
+    } catch (error) {
+      console.error("Error submitting contact:", error);
+      alert("Erreur lors de l'envoi de la demande");
+    } finally {
+      setSubmittingContact(false);
     }
   };
 
@@ -299,6 +353,111 @@ export default function PlumberProfilePage({
             </div>
           </div>
         </div>
+
+        {/* Call to Action - Contact */}
+        <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl shadow-lg p-6 mb-6 text-center">
+          <Phone className="w-12 h-12 text-white mx-auto mb-3" />
+          <h2 className="text-xl font-bold text-white mb-2">
+            Besoin de services de plomberie ?
+          </h2>
+          <p className="text-white/90 mb-4">
+            Contactez {plumber.prenom} directement via SMS
+          </p>
+          <button
+            onClick={() => setShowContactForm(true)}
+            className="bg-white hover:bg-slate-100 text-emerald-600 font-bold px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+          >
+            Contacter ce plombier
+          </button>
+        </div>
+
+        {/* Contact Form Modal */}
+        {showContactForm && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-slate-900">
+                  Contacter {plumber.prenom} {plumber.nom}
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowContactForm(false);
+                    setContactName("");
+                    setContactPhone("");
+                    setContactMessage("");
+                  }}
+                  className="text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmitContact} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Votre nom <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    placeholder="Votre nom complet"
+                    required
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Votre numéro de téléphone <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value.replace(/\D/g, ''))}
+                    placeholder="01 67 15 39 74"
+                    required
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-slate-900"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    8 ou 10 chiffres (ex: 0167153974)
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Message (optionnel)
+                  </label>
+                  <textarea
+                    value={contactMessage}
+                    onChange={(e) => setContactMessage(e.target.value)}
+                    placeholder="Décrivez brièvement votre besoin..."
+                    rows={4}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none text-slate-900 placeholder:text-slate-400"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submittingContact || !contactName.trim() || !contactPhone.trim()}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                >
+                  {submittingContact ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Envoi en cours...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      Envoyer la demande
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Call to Action - Review */}
         {!showReviewForm && (
