@@ -86,6 +86,9 @@ export default function ArtisanDashboard() {
   const [otpPinId, setOtpPinId] = useState<string | null>(null); // ClickSend OTP ID
   const [otpExpiresAt, setOtpExpiresAt] = useState<Date | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<string>("05:00");
+  const [showRechargeModal, setShowRechargeModal] = useState(false);
+  const [rechargingCredits, setRechargingCredits] = useState(false);
+  const [selectedCreditPackage, setSelectedCreditPackage] = useState<number | null>(null);
 
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
@@ -304,6 +307,39 @@ export default function ArtisanDashboard() {
     }
   };
 
+  const handleRechargeCredits = async () => {
+    if (!selectedCreditPackage) {
+      setToast({ message: "Veuillez sélectionner un package", type: "error" });
+      return;
+    }
+
+    setRechargingCredits(true);
+    try {
+      const response = await fetch(`/api/plumbers/${session?.user?.id}/sms-credits/recharge`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credits: selectedCreditPackage }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur lors du rechargement");
+      }
+
+      setToast({ message: `✅ ${selectedCreditPackage} crédits rechargés avec succès !`, type: "success" });
+      setShowRechargeModal(false);
+      setSelectedCreditPackage(null);
+      
+      // Recharger les données du plombier
+      await loadPlumberData();
+    } catch (error) {
+      setToast({ message: error instanceof Error ? error.message : "Erreur lors du rechargement", type: "error" });
+    } finally {
+      setRechargingCredits(false);
+    }
+  };
+
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -439,6 +475,16 @@ export default function ArtisanDashboard() {
                   }`} />
                 </div>
               </div>
+              <button
+                onClick={() => setShowRechargeModal(true)}
+                className={`mt-4 w-full py-2 px-4 rounded-lg font-medium text-sm transition ${
+                  plumber.smsCredits === 0
+                    ? 'bg-red-600 hover:bg-red-700 text-white'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                }`}
+              >
+                Recharger les crédits
+              </button>
             </div>
           </div>
 
@@ -845,6 +891,95 @@ export default function ArtisanDashboard() {
           </div>
         </div>
       </main>
+
+      {/* Recharge Credits Modal */}
+      {showRechargeModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-slate-900">
+                Recharger vos crédits SMS
+              </h3>
+              <button
+                onClick={() => {
+                  setShowRechargeModal(false);
+                  setSelectedCreditPackage(null);
+                }}
+                className="text-slate-400 hover:text-slate-600 transition"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <p className="text-slate-600 mb-6">
+              Sélectionnez un package de crédits SMS pour continuer à recevoir des demandes de clients.
+            </p>
+
+            <div className="space-y-3 mb-6">
+              {[
+                { credits: 10, price: 1000, popular: false },
+                { credits: 25, price: 2000, popular: true },
+                { credits: 50, price: 3500, popular: false },
+                { credits: 100, price: 6000, popular: false },
+              ].map((pkg) => (
+                <button
+                  key={pkg.credits}
+                  onClick={() => setSelectedCreditPackage(pkg.credits)}
+                  className={`w-full p-4 rounded-lg border-2 transition ${
+                    selectedCreditPackage === pkg.credits
+                      ? "border-emerald-600 bg-emerald-50"
+                      : "border-slate-200 hover:border-emerald-300"
+                  } ${pkg.popular ? "ring-2 ring-emerald-200" : ""}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="text-left">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900">{pkg.credits} crédits</span>
+                        {pkg.popular && (
+                          <span className="px-2 py-0.5 bg-emerald-600 text-white text-xs font-bold rounded">
+                            Populaire
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-slate-600 mt-1">
+                        {Math.round(pkg.price / pkg.credits)} FCFA par crédit
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-emerald-600">{pkg.price.toLocaleString()} FCFA</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowRechargeModal(false);
+                  setSelectedCreditPackage(null);
+                }}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleRechargeCredits}
+                disabled={!selectedCreditPackage || rechargingCredits}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-bold transition-colors flex items-center justify-center gap-2"
+              >
+                {rechargingCredits ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Traitement...
+                  </>
+                ) : (
+                  "Procéder au paiement"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* OTP Verification Modal */}
       {showOTPVerification && (
