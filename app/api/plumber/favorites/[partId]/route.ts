@@ -7,7 +7,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { partId: string } }
+    { params }: { params: Promise<{ partId: string }> }
 ) {
     // Rate limiting: 200 requests per minute
     const rateLimitResult = checkRateLimit(request, {
@@ -43,7 +43,7 @@ export async function DELETE(
         }
 
         const plumberId = session.user.id;
-        const { partId } = params;
+        const { partId } = await params;
 
         // Validate UUID format
         if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(partId)) {
@@ -87,8 +87,9 @@ export async function DELETE(
             }
         );
     } catch (error) {
+        const { partId } = await params;
         logger.error('Error removing favorite', error instanceof Error ? error : new Error(String(error)), {
-            partId: params.partId,
+            partId,
         });
 
         return NextResponse.json(

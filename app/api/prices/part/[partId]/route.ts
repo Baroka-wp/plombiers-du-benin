@@ -25,7 +25,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { partId: string } }
+    { params }: { params: Promise<{ partId: string }> }
 ) {
     // Rate limiting: 100 requests per minute
     const rateLimitResult = checkRateLimit(request, {
@@ -51,7 +51,7 @@ export async function GET(
     }
 
     try {
-        const { partId } = params;
+        const { partId } = await params;
 
         // Validate UUID format
         if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(partId)) {
@@ -114,7 +114,7 @@ export async function GET(
         });
 
         // Calculate distances if coordinates provided
-        let pricesWithDistance = prices;
+        let pricesWithDistance: Array<typeof prices[0] & { distance?: number }> = prices;
         if (lat !== undefined && lng !== undefined && prices.length > 0) {
             pricesWithDistance = prices
                 .filter(price => price.supplier.latitude !== null && price.supplier.longitude !== null)
@@ -129,7 +129,7 @@ export async function GET(
                 }))
                 .filter(price => {
                     // Filter by radius if provided
-                    if (radius !== undefined) {
+                    if (radius !== undefined && price.distance !== undefined) {
                         return price.distance <= radius;
                     }
                     return true;
@@ -191,8 +191,9 @@ export async function GET(
             }
         );
     } catch (error) {
+        const { partId } = await params;
         logger.error('Error fetching prices', error instanceof Error ? error : new Error(String(error)), {
-            partId: params.partId,
+            partId,
         });
 
         if (error instanceof Error && error.name === 'ZodError') {

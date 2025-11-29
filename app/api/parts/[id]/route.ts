@@ -8,7 +8,7 @@ export const revalidate = 900;
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     // Rate limiting: 100 requests per minute
     const rateLimitResult = checkRateLimit(request, {
@@ -34,7 +34,7 @@ export async function GET(
     }
 
     try {
-        const { id } = params;
+        const { id } = await params;
 
         // Validate UUID format
         if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
@@ -105,8 +105,9 @@ export async function GET(
             }
         );
     } catch (error) {
+        const { id } = await params;
         logger.error('Error fetching part details', error instanceof Error ? error : new Error(String(error)), {
-            partId: params.id,
+            partId: id,
         });
 
         return NextResponse.json(

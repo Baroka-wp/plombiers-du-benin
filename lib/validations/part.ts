@@ -9,7 +9,7 @@ export const createPartSchema = z.object({
   brand: z.string().max(100).optional().nullable(),
   categoryId: z.string().uuid('ID de catégorie invalide'),
   imageUrl: z.string().url('URL invalide').optional().nullable(),
-  unit: z.string().default('pièce').max(20),
+  unit: z.string().max(20).default('pièce'),
   isActive: z.boolean().default(true),
 });
 
@@ -22,8 +22,8 @@ export const updatePartSchema = createPartSchema.partial().extend({
 export const searchPartsQuerySchema = z.object({
   category: z.string().uuid().optional(),
   search: z.string().max(200).optional(),
-  page: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1)).default('1'),
-  limit: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(100)).default('20'),
+  page: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1)).default(1),
+  limit: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(100)).default(20),
   sort: z.enum(['name', 'createdAt', 'price']).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });
@@ -32,7 +32,7 @@ export const searchPartsQuerySchema = z.object({
 export const fullTextSearchQuerySchema = z.object({
   q: z.string().min(1, 'Le terme de recherche est requis').max(200),
   category: z.string().uuid().optional(),
-  page: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1)).default('1'),
-  limit: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(100)).default('20'),
+  page: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1)).default(1),
+  limit: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(100)).default(20),
 });
 

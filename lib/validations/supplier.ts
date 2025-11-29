@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const createSupplierSchema = z.object({
   name: z.string().min(1, 'Le nom est requis').max(200, 'Le nom est trop long'),
   type: z.enum(['magasin', 'fournisseur', 'détaillant'], {
-    errorMap: () => ({ message: 'Le type doit être: magasin, fournisseur ou détaillant' }),
+    message: 'Le type doit être: magasin, fournisseur ou détaillant',
   }),
   phone: z.string().min(1, 'Le téléphone est requis').max(20),
   email: z.string().email('Email invalide').optional().nullable(),
