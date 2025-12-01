@@ -1,6 +1,6 @@
 import { Plumber as PrismaPlumber } from "@prisma/client";
 
-export interface Plumber extends PrismaPlumber {}
+export type Plumber = PrismaPlumber;
 
 export interface PlumberWithRating extends Omit<Plumber, "createdAt" | "updatedAt"> {
   averageRating: number;
