@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { prisma } from './prisma';
 
-// ClickSend SMS API
-const CLICKSEND_URL = 'https://rest.clicksend.com/v3/sms/send';
+// OurVoice SMS API
+const OURVOICE_BASE_URL = process.env.OURVOICE_BASE_URL || 'https://api.ourvoice.com';
+const OURVOICE_API_URL = `${OURVOICE_BASE_URL}/v1/messages`;
 
 export interface SendOTPResult {
   success: boolean;
@@ -27,15 +28,15 @@ export const smsService = {
    */
   async sendOTP(phoneNumber: string): Promise<SendOTPResult> {
     try {
-      const username = process.env.CLICKSEND_USERNAME;
-      const apiKey = process.env.CLICKSEND_API_KEY;
+      const apiKey = process.env.OURVOICE_API_KEY;
+      const senderId = process.env.OURVOICE_SENDER_ID || process.env.OURVOICE_SENDER_NAME || 'Plombier';
 
-      if (!username || !apiKey) {
-        return { success: false, error: "CLICKSEND_USERNAME ou CLICKSEND_API_KEY non configurées" };
+      if (!apiKey) {
+        return { success: false, error: "OURVOICE_API_KEY non configurée" };
       }
 
-      // Formatage du numéro pour le Bénin
-      const formattedNumber = formatBeninPhoneNumber(phoneNumber);
+      // Formatage du numéro pour le Bénin (OurVoice attend le format sans +)
+      const formattedNumber = formatBeninPhoneNumberForOurVoice(phoneNumber);
 
       // Vérifier que le modèle OtpCode est disponible
       if (!prisma.otpCode) {
@@ -61,35 +62,30 @@ export const smsService = {
       // Message SMS
       const message = `Votre code de verification pour l'Annuaire des Plombiers est ${code}. Valide 5 min.`;
 
-      // Envoyer le SMS via ClickSend
+      // Envoyer le SMS via OurVoice
       const payload = {
-        messages: [
-          {
-            source: 'php',
-            from: process.env.CLICKSEND_SENDER_ID || 'Plombier',
-            body: message,
-            to: formattedNumber,
-          },
-        ],
+        to: formattedNumber,
+        body: message,
+        sender_id: senderId,
       };
 
-      console.log('Sending OTP via ClickSend:', { 
+      console.log('Sending OTP via OurVoice:', { 
         to: formattedNumber,
-        url: CLICKSEND_URL 
+        url: OURVOICE_API_URL 
       });
 
-      const response = await axios.post(CLICKSEND_URL, payload, {
+      const response = await axios.post(OURVOICE_API_URL, payload, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Basic ${Buffer.from(`${username}:${apiKey}`).toString('base64')}`,
+          'Authorization': `Bearer ${apiKey}`,
         },
         timeout: 10000,
       });
 
-      // ClickSend retourne un objet avec http_code et data
-      if (response.data.http_code === 200 && response.data.data?.messages) {
-        const messageResult = response.data.data.messages[0];
-        if (messageResult?.status === 'SUCCESS' || messageResult?.status === 'QUEUED') {
+      // OurVoice retourne { data: { id, status, ... } }
+      if (response.status === 200 && response.data?.data) {
+        const messageData = response.data.data;
+        if (messageData.status === 'sent' || messageData.status === 'queued') {
           return { success: true, pinId: otpRecord.id };
         }
       }
@@ -97,7 +93,7 @@ export const smsService = {
       // Si l'envoi échoue, supprimer le code OTP de la base
       await prisma.otpCode.delete({ where: { id: otpRecord.id } });
       
-      throw new Error(response.data.response_msg || "Erreur d'envoi");
+      throw new Error(response.data?.message || "Erreur d'envoi");
     } catch (error) {
       console.error('Erreur SMS:', error);
       
@@ -106,32 +102,32 @@ export const smsService = {
           const errorData = error.response.data;
           const status = error.response.status;
           
-          console.error('ClickSend API Error Response:', {
+          console.error('OurVoice API Error Response:', {
             status,
             data: errorData,
           });
 
           let errorMessage = "Impossible d'envoyer le SMS.";
           
-          if (errorData?.response_msg) {
-            errorMessage = errorData.response_msg;
-          } else if (errorData?.message) {
+          if (errorData?.message) {
             errorMessage = errorData.message;
+          } else if (errorData?.error) {
+            errorMessage = errorData.error;
           }
 
           if (status === 400) {
             errorMessage = errorMessage || "Requête invalide. Vérifiez le format du numéro.";
           } else if (status === 401) {
-            errorMessage = "Identifiants ClickSend invalides. Vérifiez CLICKSEND_USERNAME et CLICKSEND_API_KEY.";
+            errorMessage = "Identifiants OurVoice invalides. Vérifiez OURVOICE_API_KEY.";
           } else if (status === 402) {
-            errorMessage = "Crédits insuffisants. Rechargez votre compte ClickSend.";
+            errorMessage = "Crédits insuffisants. Rechargez votre compte OurVoice.";
           } else if (status === 500) {
-            errorMessage = errorMessage || "Erreur serveur ClickSend. Réessayez plus tard.";
+            errorMessage = errorMessage || "Erreur serveur OurVoice. Réessayez plus tard.";
           }
 
           return { success: false, error: errorMessage };
         } else if (error.request) {
-          console.error('No response from ClickSend API:', error.request);
+          console.error('No response from OurVoice API:', error.request);
           return { success: false, error: "Pas de réponse du serveur SMS. Vérifiez votre connexion." };
         }
       }
@@ -195,51 +191,47 @@ export const smsService = {
    */
   async sendSMS(phoneNumber: string, message: string): Promise<SendSMSResult> {
     try {
-      const username = process.env.CLICKSEND_USERNAME;
-      const apiKey = process.env.CLICKSEND_API_KEY;
+      const apiKey = process.env.OURVOICE_API_KEY;
+      const senderId = process.env.OURVOICE_SENDER_ID || process.env.OURVOICE_SENDER_NAME || 'Plombier';
 
-      if (!username || !apiKey) {
-        return { success: false, error: "CLICKSEND_USERNAME ou CLICKSEND_API_KEY non configurées" };
+      if (!apiKey) {
+        return { success: false, error: "OURVOICE_API_KEY non configurée" };
       }
 
-      // Formatage du numéro pour le Bénin
-      const formattedNumber = formatBeninPhoneNumber(phoneNumber);
+      // Formatage du numéro pour le Bénin (OurVoice attend le format sans +)
+      const formattedNumber = formatBeninPhoneNumberForOurVoice(phoneNumber);
 
       const payload = {
-        messages: [
-          {
-            source: 'php',
-            from: process.env.CLICKSEND_SENDER_ID || 'Plombier',
-            body: message,
-            to: formattedNumber,
-          },
-        ],
+        to: formattedNumber,
+        body: message,
+        sender_id: senderId,
       };
 
-      console.log('Sending SMS via ClickSend:', { 
+      console.log('Sending SMS via OurVoice:', { 
         to: formattedNumber,
-        url: CLICKSEND_URL 
+        url: OURVOICE_API_URL 
       });
 
-      const response = await axios.post(CLICKSEND_URL, payload, {
+      const response = await axios.post(OURVOICE_API_URL, payload, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Basic ${Buffer.from(`${username}:${apiKey}`).toString('base64')}`,
+          'Authorization': `Bearer ${apiKey}`,
         },
         timeout: 10000,
       });
 
-      if (response.data.http_code === 200 && response.data.data?.messages) {
-        const messageResult = response.data.data.messages[0];
-        if (messageResult?.status === 'SUCCESS' || messageResult?.status === 'QUEUED') {
+      // OurVoice retourne { data: { id, status, ... } }
+      if (response.status === 200 && response.data?.data) {
+        const messageData = response.data.data;
+        if (messageData.status === 'sent' || messageData.status === 'queued') {
           return { 
             success: true, 
-            messageId: messageResult.message_id || messageResult.messageId 
+            messageId: messageData.id 
           };
         }
       }
 
-      const errorMsg = response.data.response_msg || "Erreur d'envoi";
+      const errorMsg = response.data?.message || "Erreur d'envoi";
       return { success: false, error: errorMsg };
     } catch (error) {
       console.error('Erreur envoi SMS:', error);
@@ -251,16 +243,16 @@ export const smsService = {
           
           let errorMessage = "Impossible d'envoyer le SMS.";
           
-          if (errorData?.response_msg) {
-            errorMessage = errorData.response_msg;
-          } else if (errorData?.message) {
+          if (errorData?.message) {
             errorMessage = errorData.message;
+          } else if (errorData?.error) {
+            errorMessage = errorData.error;
           }
 
           if (status === 401) {
-            errorMessage = "Identifiants ClickSend invalides.";
+            errorMessage = "Identifiants OurVoice invalides.";
           } else if (status === 402) {
-            errorMessage = "Crédits insuffisants. Rechargez votre compte ClickSend.";
+            errorMessage = "Crédits insuffisants. Rechargez votre compte OurVoice.";
           }
 
           return { success: false, error: errorMessage };
@@ -275,9 +267,9 @@ export const smsService = {
   }
 };
 
-// Format phone number for Benin (229) - Format E.164 pour ClickSend
-// Format attendu: +2290167153974 (avec le code pays et le préfixe 01)
-function formatBeninPhoneNumber(phone: string): string {
+// Format phone number for Benin (229) - Format pour OurVoice
+// Format attendu: 2290167153974 (sans le préfixe +)
+function formatBeninPhoneNumberForOurVoice(phone: string): string {
   const cleaned = phone.replace(/[\s\-\(\)\+]/g, "");
   let formatted = "";
   
@@ -305,7 +297,7 @@ function formatBeninPhoneNumber(phone: string): string {
     formatted = "229" + cleaned;
   }
   
-  // Ajouter le préfixe + pour le format E.164 (requis par ClickSend)
-  return "+" + formatted;
+  // OurVoice attend le format sans le préfixe +
+  return formatted;
 }
 

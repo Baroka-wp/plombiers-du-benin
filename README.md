@@ -83,10 +83,10 @@ plombier-benin/
    NEXTAUTH_URL="http://localhost:3000"
    NEXTAUTH_SECRET="your-secret-key-here" # Générer avec: openssl rand -base64 32
    
-   # ClickSend SMS (pour l'envoi de SMS et OTP)
-   CLICKSEND_USERNAME="your_clicksend_username"
-   CLICKSEND_API_KEY="your_clicksend_api_key"
-   CLICKSEND_SENDER_ID="Plombier" # Optionnel, par défaut "Plombier"
+   # OurVoice SMS (pour l'envoi de SMS et OTP)
+   OURVOICE_API_KEY="your_ourvoice_api_key"
+   OURVOICE_SENDER_ID="Plombier" # Optionnel, peut aussi utiliser OURVOICE_SENDER_NAME
+   OURVOICE_BASE_URL="https://api.ourvoice.com" # Optionnel, URL par défaut
    
    # Cloudinary
    NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="your_upload_preset_name"
@@ -160,9 +160,9 @@ plombier-benin/
 - `DATABASE_URL` : URL de connexion PostgreSQL
 - `NEXTAUTH_URL` : URL de base de l'application (ex: `http://localhost:3000` en dev, `https://yourdomain.com` en prod)
 - `NEXTAUTH_SECRET` : Clé secrète pour NextAuth (générer avec `openssl rand -base64 32`)
-- `CLICKSEND_USERNAME` : Nom d'utilisateur ClickSend (votre email ClickSend)
-- `CLICKSEND_API_KEY` : Clé API ClickSend pour l'envoi de SMS
-- `CLICKSEND_SENDER_ID` : ID de l'expéditeur SMS (optionnel, par défaut "Plombier")
+- `OURVOICE_API_KEY` : Clé API OurVoice pour l'envoi de SMS
+- `OURVOICE_SENDER_ID` : ID de l'expéditeur SMS (optionnel, peut aussi utiliser OURVOICE_SENDER_NAME)
+- `OURVOICE_BASE_URL` : URL de base de l'API OurVoice (optionnel, par défaut "https://api.ourvoice.com")
 - `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` : Preset Cloudinary
 - `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` : Nom du cloud Cloudinary
 

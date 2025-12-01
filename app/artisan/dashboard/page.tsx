@@ -83,7 +83,7 @@ export default function ArtisanDashboard() {
   const [verifyingOTP, setVerifyingOTP] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [phoneChanged, setPhoneChanged] = useState(false);
-  const [otpPinId, setOtpPinId] = useState<string | null>(null); // ClickSend OTP ID
+  const [otpPinId, setOtpPinId] = useState<string | null>(null); // OurVoice OTP ID
   const [otpExpiresAt, setOtpExpiresAt] = useState<Date | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<string>("05:00");
   const [showRechargeModal, setShowRechargeModal] = useState(false);
@@ -243,7 +243,7 @@ export default function ArtisanDashboard() {
         throw new Error(data.error || "Erreur lors de l'envoi");
       }
 
-      // Stocker l'ID OTP de ClickSend pour vérification
+      // Stocker l'ID OTP de OurVoice pour vérification
       setOtpPinId(data.pinId);
       setOtpSent(true);
       // Définir l'expiration à 5 minutes

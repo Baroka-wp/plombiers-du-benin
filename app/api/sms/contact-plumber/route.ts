@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     // Format message selon le plan
     const smsMessage = `Bonjour, je recherche un plombier. Veuillez me recontacter au ${clientPhone}. ${clientName}.${message ? ` ${message}` : ""}`;
 
-    // Envoyer le SMS au plombier via ClickSend
+    // Envoyer le SMS au plombier via OurVoice
     const smsResult = await smsService.sendSMS(plumber.telephone, smsMessage);
 
     // Décrémenter les crédits seulement si l'envoi a réussi
