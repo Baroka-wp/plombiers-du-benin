@@ -257,6 +257,17 @@ export const smsService = {
         if (messageId) {
           return { success: true, messageId };
         }
+
+        // Fallback: check status if no ID found
+        if (data?.data?.status === 'sent' || data?.data?.status === 'queued' || data?.data?.status === 'pending' ||
+            data?.status === 'sent' || data?.status === 'queued' || data?.status === 'pending') {
+             return { success: true, messageId: 'unknown' };
+        }
+        
+        // Fallback 2: Assume success if 200/201 and no error message
+        if (!data?.error && !data?.message) {
+             return { success: true, messageId: 'unknown' };
+        }
       }
 
       const errorMsg = response.data?.message || "Erreur d'envoi";
