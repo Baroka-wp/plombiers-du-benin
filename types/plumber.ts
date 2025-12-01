@@ -32,4 +32,3 @@ export interface PlumberQRData {
   membershipId: string | null;
   profileUrl: string;
 }
-

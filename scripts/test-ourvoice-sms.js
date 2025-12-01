@@ -3,6 +3,9 @@
  * Usage: node scripts/test-ourvoice-sms.js
  */
 
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable no-console */
+
 const axios = require('axios');
 require('dotenv').config({ path: '.env.local' });
 
