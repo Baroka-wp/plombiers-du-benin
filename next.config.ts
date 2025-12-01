@@ -26,6 +26,8 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '10mb',
     },
   },
+  // Transpiler le package ourvoice-node pour Next.js
+  transpilePackages: ['ourvoice-node'],
 };
 
 export default nextConfig;
