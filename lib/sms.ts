@@ -1,36 +1,9 @@
+import axios from 'axios';
 import { prisma } from './prisma';
 
-// Import du SDK OurVoice (CommonJS)
-// Charger le SDK de manière dynamique pour éviter les problèmes avec Next.js/Turbopack
-let ourvoiceClient: any = null;
-let OurVoiceClass: any = null;
-
-function getOurVoiceClient() {
-  const apiKey = process.env.OURVOICE_API_KEY;
-  if (!apiKey) {
-    throw new Error('OURVOICE_API_KEY non configurée');
-  }
-  
-  if (!ourvoiceClient) {
-    // Charger le SDK CommonJS de manière dynamique
-    if (!OurVoiceClass) {
-      // Utiliser eval pour charger require dans un contexte approprié
-      // @ts-ignore
-      const sdk = eval('require')('ourvoice-node');
-      OurVoiceClass = sdk.OurVoice;
-    }
-    
-    if (!OurVoiceClass) {
-      throw new Error('OurVoice class not found in SDK');
-    }
-    
-    ourvoiceClient = new OurVoiceClass({
-      apiKey: apiKey,
-    });
-  }
-  
-  return ourvoiceClient;
-}
+// OurVoice SMS API
+const OURVOICE_BASE_URL = process.env.OURVOICE_BASE_URL || 'https://api.getourvoice.com';
+const OURVOICE_API_URL = `${OURVOICE_BASE_URL}/v1/messages`;
 
 export interface SendOTPResult {
   success: boolean;
@@ -56,7 +29,8 @@ export const smsService = {
   async sendOTP(phoneNumber: string): Promise<SendOTPResult> {
     try {
       const apiKey = process.env.OURVOICE_API_KEY;
-      const senderId = process.env.OURVOICE_SENDER_ID || process.env.OURVOICE_SENDER_NAME || 'Plombier';
+      const senderId = process.env.OURVOICE_SENDER_ID; // Numeric ID
+      const senderName = process.env.OURVOICE_SENDER_NAME || 'Plombier'; // Alphanumeric Name
 
       if (!apiKey) {
         return { success: false, error: "OURVOICE_API_KEY non configurée" };
@@ -89,60 +63,96 @@ export const smsService = {
       // Message SMS
       const message = `Votre code de verification pour l'Annuaire des Plombiers est ${code}. Valide 5 min.`;
 
-      // Initialiser le client OurVoice
-      const ourvoice = getOurVoiceClient();
-
-      // Déterminer le sender (from)
-      const senderName = process.env.OURVOICE_SENDER_NAME || process.env.OURVOICE_SENDER_ID || senderId || 'Plombier';
-
-      console.log('Sending OTP via OurVoice SDK:', {
-        to: formattedNumber,
-        from: senderName,
-        bodyLength: message.length,
-      });
-
-      // Envoyer le SMS via le SDK
-      // Format selon la doc: ourvoice.messages.insertOne({ from, to, body })
-      const addSms = await ourvoice.messages.insertOne({
-        from: senderName,
-        to: formattedNumber,
+      // Préparer le payload selon les spécifications OurVoice
+      // 1. Le champ 'to' doit être un tableau de chaînes
+      // 2. Il faut utiliser soit 'sender_id' (numérique) soit 'sender_name' (alphanumérique), l'un est OBLIGATOIRE
+      const payload: any = {
+        to: [formattedNumber], 
         body: message,
+      };
+
+      // Logique de sélection de l'expéditeur
+      if (senderId && /^\d+$/.test(senderId)) {
+        payload.sender_id = senderId;
+      } else {
+        // Utiliser sender_name (défaut 'Plombier') si pas de sender_id numérique
+        payload.sender_name = senderName;
+      }
+
+      console.log('Sending OTP via OurVoice (Axios):', { 
+        url: OURVOICE_API_URL,
+        payload: JSON.stringify(payload, null, 2)
       });
 
-      console.log('OurVoice SDK Response:', {
-        insertedId: addSms.insertedId,
-        result: addSms,
+      const response = await axios.post(OURVOICE_API_URL, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        timeout: 10000,
       });
 
-      // Si l'envoi réussit, on a un insertedId
-      if (addSms.insertedId) {
-        return { success: true, pinId: otpRecord.id };
+      console.log('OurVoice API Response:', {
+        status: response.status,
+        data: JSON.stringify(response.data, null, 2)
+      });
+
+      // Vérifier le succès (Supporte différents formats de réponse)
+      if (response.status === 200 || response.status === 201) {
+        const data = response.data;
+        
+        // Cas 1: { data: { status: 'sent' ... } }
+        if (data?.data?.status === 'sent' || data?.data?.status === 'queued' || data?.data?.status === 'pending') {
+          return { success: true, pinId: otpRecord.id };
+        }
+        
+        // Cas 2: { status: 'sent' ... } directement à la racine
+        if (data?.status === 'sent' || data?.status === 'queued' || data?.status === 'pending') {
+          return { success: true, pinId: otpRecord.id };
+        }
+        
+        // Si pas d'erreur explicite, on considère comme succès si status HTTP OK
+        if (!data?.error && !data?.message) {
+           console.warn('OurVoice response format unclear but HTTP OK, assuming success');
+           return { success: true, pinId: otpRecord.id };
+        }
       }
 
       // Si l'envoi échoue, supprimer le code OTP de la base
       await prisma.otpCode.delete({ where: { id: otpRecord.id } });
       
-      throw new Error("Erreur d'envoi - aucun ID retourné");
+      throw new Error(response.data?.message || response.data?.error || "Erreur d'envoi inconnue");
     } catch (error) {
       console.error('Erreur SMS:', error);
       
-      // Gestion des erreurs du SDK OurVoice
-      let errorMessage = "Impossible d'envoyer le SMS.";
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-        
-        // Messages d'erreur spécifiques
-        if (error.message.includes('API key') || error.message.includes('authentication')) {
-          errorMessage = "Identifiants OurVoice invalides. Vérifiez OURVOICE_API_KEY.";
-        } else if (error.message.includes('credit') || error.message.includes('balance')) {
-          errorMessage = "Crédits insuffisants. Rechargez votre compte OurVoice.";
-        } else if (error.message.includes('validation') || error.message.includes('invalid')) {
-          errorMessage = "Erreur de validation. Vérifiez le format du numéro et du message.";
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          const errorData = error.response.data;
+          console.error('OurVoice API Error Response:', {
+            status: error.response.status,
+            data: errorData,
+          });
+
+          let errorMessage = "Impossible d'envoyer le SMS.";
+          
+          // Extraire le message d'erreur
+          if (errorData?.message) errorMessage = errorData.message;
+          else if (errorData?.error) errorMessage = errorData.error;
+          
+          // Erreurs de validation (array)
+          if (errorData?.data && Array.isArray(errorData.data)) {
+             errorMessage = `Validation: ${errorData.data.join(', ')}`;
+          }
+
+          if (error.response.status === 401) errorMessage = "Identifiants OurVoice invalides.";
+          else if (error.response.status === 402) errorMessage = "Crédits insuffisants.";
+
+          return { success: false, error: errorMessage };
         }
       }
 
-      return { success: false, error: errorMessage };
+      const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
+      return { success: false, error: `Impossible d'envoyer le SMS: ${errorMessage}` };
     }
   },
 
@@ -153,8 +163,8 @@ export const smsService = {
     try {
       // Vérifier que le modèle OtpCode est disponible
       if (!prisma.otpCode) {
-        console.error('Prisma OtpCode model not available. Please restart the Next.js server and run: npx prisma generate && npx prisma db push');
-        return { success: false, error: "Service SMS non configuré. Veuillez redémarrer le serveur." };
+        console.error('Prisma OtpCode model not available.');
+        return { success: false, error: "Service SMS non configuré." };
       }
 
       // Récupérer le code OTP depuis la base de données
@@ -201,69 +211,79 @@ export const smsService = {
   async sendSMS(phoneNumber: string, message: string): Promise<SendSMSResult> {
     try {
       const apiKey = process.env.OURVOICE_API_KEY;
-      const senderId = process.env.OURVOICE_SENDER_ID || process.env.OURVOICE_SENDER_NAME || 'Plombier';
+      const senderId = process.env.OURVOICE_SENDER_ID;
+      const senderName = process.env.OURVOICE_SENDER_NAME || 'Plombier';
 
       if (!apiKey) {
         return { success: false, error: "OURVOICE_API_KEY non configurée" };
       }
 
-      // Formatage du numéro pour le Bénin
       const formattedNumber = formatBeninPhoneNumberForOurVoice(phoneNumber);
 
-      // Initialiser le client OurVoice
-      const ourvoice = getOurVoiceClient();
-
-      // Déterminer le sender (from)
-      const senderName = process.env.OURVOICE_SENDER_NAME || process.env.OURVOICE_SENDER_ID || senderId || 'Plombier';
-
-      console.log('Sending SMS via OurVoice SDK:', {
-        to: formattedNumber,
-        from: senderName,
-        bodyLength: message.length,
-      });
-
-      // Envoyer le SMS via le SDK
-      // Format: ourvoice.messages.insertOne({ from, to, body })
-      const addSms = await ourvoice.messages.insertOne({
-        from: senderName,
-        to: formattedNumber,
+      // Payload construction strict
+      const payload: any = {
+        to: [formattedNumber], // Array required
         body: message,
-      });
+      };
 
-      console.log('OurVoice SDK Response:', {
-        insertedId: addSms.insertedId,
-        result: addSms,
-      });
-
-      // Si l'envoi réussit, on a un insertedId
-      if (addSms.insertedId) {
-        return { 
-          success: true, 
-          messageId: addSms.insertedId 
-        };
+      if (senderId && /^\d+$/.test(senderId)) {
+        payload.sender_id = senderId;
+      } else {
+        payload.sender_name = senderName;
       }
 
-      return { success: false, error: "Erreur d'envoi - aucun ID retourné" };
-    } catch (error) {
-      console.error('Erreur envoi SMS:', error);
-      
-      // Gestion des erreurs du SDK OurVoice
-      let errorMessage = "Impossible d'envoyer le SMS.";
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
+      console.log('Sending SMS via OurVoice (Axios):', { 
+        url: OURVOICE_API_URL,
+        payload: JSON.stringify(payload, null, 2)
+      });
+
+      const response = await axios.post(OURVOICE_API_URL, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        timeout: 10000,
+      });
+
+      console.log('OurVoice API Response:', {
+        status: response.status,
+        data: JSON.stringify(response.data, null, 2)
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        const data = response.data;
+        const messageId = data?.data?.id || data?.id;
         
-        // Messages d'erreur spécifiques
-        if (error.message.includes('API key') || error.message.includes('authentication')) {
-          errorMessage = "Identifiants OurVoice invalides. Vérifiez OURVOICE_API_KEY.";
-        } else if (error.message.includes('credit') || error.message.includes('balance')) {
-          errorMessage = "Crédits insuffisants. Rechargez votre compte OurVoice.";
-        } else if (error.message.includes('validation') || error.message.includes('invalid')) {
-          errorMessage = "Erreur de validation. Vérifiez le format du numéro et du message.";
+        if (messageId) {
+          return { success: true, messageId };
         }
       }
 
-      return { success: false, error: errorMessage };
+      const errorMsg = response.data?.message || "Erreur d'envoi";
+      return { success: false, error: errorMsg };
+    } catch (error) {
+      console.error('Erreur envoi SMS:', error);
+      
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          const errorData = error.response.data;
+          console.error('OurVoice API Error Response:', {
+            status: error.response.status,
+            data: errorData,
+          });
+          
+          let errorMessage = "Impossible d'envoyer le SMS.";
+          if (errorData?.message) errorMessage = errorData.message;
+          if (errorData?.data && Array.isArray(errorData.data)) {
+             errorMessage = `Validation: ${errorData.data.join(', ')}`;
+          }
+          
+          return { success: false, error: errorMessage };
+        }
+      }
+
+      const errorMessage = error instanceof Error ? error.message : "Erreur inconnue";
+      return { success: false, error: `Impossible d'envoyer le SMS: ${errorMessage}` };
     }
   }
 };
@@ -301,4 +321,3 @@ function formatBeninPhoneNumberForOurVoice(phone: string): string {
   // OurVoice attend le format sans le préfixe +
   return formatted;
 }
-
