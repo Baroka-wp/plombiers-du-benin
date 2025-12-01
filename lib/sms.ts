@@ -63,15 +63,35 @@ export const smsService = {
       const message = `Votre code de verification pour l'Annuaire des Plombiers est ${code}. Valide 5 min.`;
 
       // Envoyer le SMS via OurVoice
-      const payload = {
-        to: formattedNumber,
+      // OurVoice: Le champ 'to' doit être un tableau
+      // Selon la doc, on peut utiliser 'from', 'sender_id' ou 'sender_name'
+      const payload: any = {
+        to: [formattedNumber], // Tableau de numéros (requis)
         body: message,
-        sender_id: senderId,
       };
+      
+      // Essayer d'abord 'from' (format le plus courant selon la doc)
+      if (process.env.OURVOICE_SENDER_NAME) {
+        payload.from = process.env.OURVOICE_SENDER_NAME;
+      } else if (process.env.OURVOICE_SENDER_ID) {
+        // Si c'est un ID numérique, utiliser sender_id, sinon from
+        if (/^\d+$/.test(process.env.OURVOICE_SENDER_ID)) {
+          payload.sender_id = process.env.OURVOICE_SENDER_ID;
+        } else {
+          payload.from = process.env.OURVOICE_SENDER_ID;
+        }
+      } else if (senderId) {
+        // Fallback: utiliser 'from' par défaut
+        payload.from = senderId;
+      }
 
+      // Log détaillé du payload avant envoi
       console.log('Sending OTP via OurVoice:', { 
-        to: formattedNumber,
-        url: OURVOICE_API_URL 
+        url: OURVOICE_API_URL,
+        payload: JSON.stringify(payload, null, 2),
+        formattedNumber,
+        senderId,
+        hasApiKey: !!apiKey,
       });
 
       const response = await axios.post(OURVOICE_API_URL, payload, {
@@ -82,18 +102,39 @@ export const smsService = {
         timeout: 10000,
       });
 
+      // Log de la réponse complète pour diagnostic
+      console.log('OurVoice API Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: JSON.stringify(response.data, null, 2),
+      });
+
       // OurVoice retourne { data: { id, status, ... } }
-      if (response.status === 200 && response.data?.data) {
-        const messageData = response.data.data;
-        if (messageData.status === 'sent' || messageData.status === 'queued') {
+      if (response.status === 200 || response.status === 201) {
+        // Vérifier différents formats de réponse possibles
+        const responseData = response.data;
+        
+        // Format 1: { data: { id, status, ... } }
+        if (responseData?.data) {
+          const messageData = responseData.data;
+          if (messageData.status === 'sent' || messageData.status === 'queued' || messageData.status === 'pending') {
+            return { success: true, pinId: otpRecord.id };
+          }
+        }
+        
+        // Format 2: { id, status, ... } directement
+        if (responseData?.id && (responseData.status === 'sent' || responseData.status === 'queued' || responseData.status === 'pending')) {
           return { success: true, pinId: otpRecord.id };
         }
+        
+        // Si on arrive ici, la réponse est 200 mais le format n'est pas reconnu
+        console.warn('OurVoice response format not recognized:', responseData);
       }
 
       // Si l'envoi échoue, supprimer le code OTP de la base
       await prisma.otpCode.delete({ where: { id: otpRecord.id } });
       
-      throw new Error(response.data?.message || "Erreur d'envoi");
+      throw new Error(response.data?.message || response.data?.error || "Erreur d'envoi");
     } catch (error) {
       console.error('Erreur SMS:', error);
       
@@ -201,15 +242,35 @@ export const smsService = {
       // Formatage du numéro pour le Bénin (OurVoice attend le format sans +)
       const formattedNumber = formatBeninPhoneNumberForOurVoice(phoneNumber);
 
-      const payload = {
-        to: formattedNumber,
+      // OurVoice: Le champ 'to' doit être un tableau
+      // Selon la doc, on peut utiliser 'from', 'sender_id' ou 'sender_name'
+      const payload: any = {
+        to: [formattedNumber], // Tableau de numéros (requis)
         body: message,
-        sender_id: senderId,
       };
+      
+      // Essayer d'abord 'from' (format le plus courant selon la doc)
+      if (process.env.OURVOICE_SENDER_NAME) {
+        payload.from = process.env.OURVOICE_SENDER_NAME;
+      } else if (process.env.OURVOICE_SENDER_ID) {
+        // Si c'est un ID numérique, utiliser sender_id, sinon from
+        if (/^\d+$/.test(process.env.OURVOICE_SENDER_ID)) {
+          payload.sender_id = process.env.OURVOICE_SENDER_ID;
+        } else {
+          payload.from = process.env.OURVOICE_SENDER_ID;
+        }
+      } else if (senderId) {
+        // Fallback: utiliser 'from' par défaut
+        payload.from = senderId;
+      }
 
+      // Log détaillé du payload avant envoi
       console.log('Sending SMS via OurVoice:', { 
-        to: formattedNumber,
-        url: OURVOICE_API_URL 
+        url: OURVOICE_API_URL,
+        payload: JSON.stringify(payload, null, 2),
+        formattedNumber,
+        senderId,
+        hasApiKey: !!apiKey,
       });
 
       const response = await axios.post(OURVOICE_API_URL, payload, {
@@ -220,18 +281,42 @@ export const smsService = {
         timeout: 10000,
       });
 
+      // Log de la réponse complète pour diagnostic
+      console.log('OurVoice API Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: JSON.stringify(response.data, null, 2),
+      });
+
       // OurVoice retourne { data: { id, status, ... } }
-      if (response.status === 200 && response.data?.data) {
-        const messageData = response.data.data;
-        if (messageData.status === 'sent' || messageData.status === 'queued') {
+      if (response.status === 200 || response.status === 201) {
+        // Vérifier différents formats de réponse possibles
+        const responseData = response.data;
+        
+        // Format 1: { data: { id, status, ... } }
+        if (responseData?.data) {
+          const messageData = responseData.data;
+          if (messageData.status === 'sent' || messageData.status === 'queued' || messageData.status === 'pending') {
+            return { 
+              success: true, 
+              messageId: messageData.id 
+            };
+          }
+        }
+        
+        // Format 2: { id, status, ... } directement
+        if (responseData?.id && (responseData.status === 'sent' || responseData.status === 'queued' || responseData.status === 'pending')) {
           return { 
             success: true, 
-            messageId: messageData.id 
+            messageId: responseData.id 
           };
         }
+        
+        // Si on arrive ici, la réponse est 200 mais le format n'est pas reconnu
+        console.warn('OurVoice response format not recognized:', responseData);
       }
 
-      const errorMsg = response.data?.message || "Erreur d'envoi";
+      const errorMsg = response.data?.message || response.data?.error || "Erreur d'envoi";
       return { success: false, error: errorMsg };
     } catch (error) {
       console.error('Erreur envoi SMS:', error);
@@ -241,18 +326,40 @@ export const smsService = {
           const errorData = error.response.data;
           const status = error.response.status;
           
+          // Log détaillé pour debug
+          const formattedNumber = formatBeninPhoneNumberForOurVoice(phoneNumber);
+          const senderIdForLog = process.env.OURVOICE_SENDER_ID || process.env.OURVOICE_SENDER_NAME || 'Plombier';
+          console.error('OurVoice API Error Response:', {
+            status,
+            data: errorData,
+            payload: {
+              to: formattedNumber,
+              body: message.substring(0, 50) + '...',
+              sender_id: senderIdForLog,
+            }
+          });
+          
           let errorMessage = "Impossible d'envoyer le SMS.";
           
+          // OurVoice peut retourner des erreurs de validation détaillées
           if (errorData?.message) {
             errorMessage = errorData.message;
           } else if (errorData?.error) {
             errorMessage = errorData.error;
+          } else if (errorData?.errors) {
+            // Si c'est un objet d'erreurs de validation
+            const errors = Array.isArray(errorData.errors) 
+              ? errorData.errors.join(', ')
+              : JSON.stringify(errorData.errors);
+            errorMessage = `Erreurs de validation: ${errors}`;
           }
 
           if (status === 401) {
             errorMessage = "Identifiants OurVoice invalides.";
           } else if (status === 402) {
             errorMessage = "Crédits insuffisants. Rechargez votre compte OurVoice.";
+          } else if (status === 422) {
+            errorMessage = errorMessage || "Erreurs de validation. Vérifiez le format du numéro et du message.";
           }
 
           return { success: false, error: errorMessage };
