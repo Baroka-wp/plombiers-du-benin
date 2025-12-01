@@ -2,7 +2,9 @@ import axios from 'axios';
 import { prisma } from './prisma';
 
 // OurVoice SMS API
-const OURVOICE_BASE_URL = process.env.OURVOICE_BASE_URL || 'https://api.ourvoice.com';
+// Note: Vérifiez l'URL de base exacte dans votre documentation OurVoice
+// Options possibles: https://api.getourvoice.com, https://getourvoice.com/api, etc.
+const OURVOICE_BASE_URL = process.env.OURVOICE_BASE_URL || 'https://api.getourvoice.com';
 const OURVOICE_API_URL = `${OURVOICE_BASE_URL}/v1/messages`;
 
 export interface SendOTPResult {

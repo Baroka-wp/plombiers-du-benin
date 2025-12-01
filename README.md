@@ -86,7 +86,7 @@ plombier-benin/
    # OurVoice SMS (pour l'envoi de SMS et OTP)
    OURVOICE_API_KEY="your_ourvoice_api_key"
    OURVOICE_SENDER_ID="Plombier" # Optionnel, peut aussi utiliser OURVOICE_SENDER_NAME
-   OURVOICE_BASE_URL="https://api.ourvoice.com" # Optionnel, URL par défaut
+   OURVOICE_BASE_URL="https://api.getourvoice.com" # Optionnel, vérifiez l'URL exacte dans votre documentation OurVoice
    
    # Cloudinary
    NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET="your_upload_preset_name"
