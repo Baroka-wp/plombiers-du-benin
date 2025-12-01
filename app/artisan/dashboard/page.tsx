@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -18,12 +18,26 @@ import {
   FileText,
   MessageSquare,
   Wallet,
-  Clock,
-  AlertTriangle
+  Calendar,
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  Filter
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import Toast from "@/components/Toast";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar
+} from "recharts";
 
 // --- Types & Constants ---
 
@@ -49,6 +63,19 @@ interface StatsData {
   recentContactRequests: any[];
   reviewCount: number;
   averageRating: number;
+}
+
+interface ContactRequest {
+  id: string;
+  clientName: string;
+  clientPhone: string;
+  message: string | null;
+  createdAt: string;
+}
+
+interface ChartDataPoint {
+  name: string;
+  value: number;
 }
 
 const LOCATIONS: Record<string, string[]> = {
@@ -106,6 +133,15 @@ export default function ArtisanDashboard() {
     quartier: "",
   });
 
+  // Contact Requests & Chart State
+  const [contactRequests, setContactRequests] = useState<ContactRequest[]>([]);
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [filter, setFilter] = useState("week"); // today, week, month, year
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRequests, setTotalRequests] = useState(0);
+
   // OTP State
   const [showOTPVerification, setShowOTPVerification] = useState(false);
   const [otpCode, setOtpCode] = useState("");
@@ -133,6 +169,33 @@ export default function ArtisanDashboard() {
       loadPlumberData();
     }
   }, [status, session, router]);
+
+  const fetchContactRequests = useCallback(async () => {
+    if (!session?.user?.id) return;
+    setRequestsLoading(true);
+    try {
+      const res = await fetch(
+        `/api/plumbers/${session.user.id}/contact-requests?page=${page}&limit=5&filter=${filter}`
+      );
+      const data = await res.json();
+      if (res.ok) {
+        setContactRequests(data.requests);
+        setTotalPages(data.totalPages);
+        setTotalRequests(data.total);
+        setChartData(data.chartData);
+      }
+    } catch (error) {
+      console.error("Error fetching requests:", error);
+    } finally {
+      setRequestsLoading(false);
+    }
+  }, [session?.user?.id, page, filter]);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchContactRequests();
+    }
+  }, [fetchContactRequests]);
 
   useEffect(() => {
     if (!otpExpiresAt || !otpSent) {
@@ -173,7 +236,7 @@ export default function ArtisanDashboard() {
         quartier: data.quartier,
       });
 
-      // Load Stats
+      // Load General Stats (Cards)
       try {
         const statsResponse = await fetch(`/api/plumbers/${session?.user?.id}/stats`);
         if (statsResponse.ok) {
@@ -386,63 +449,8 @@ export default function ArtisanDashboard() {
           {/* --- Main Content (Left) --- */}
           <div className="lg:col-span-2 space-y-8">
             
-            {/* Recent Activity Section */}
-            <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-emerald-600" />
-                  Activité Récente
-                </h2>
-                <span className="text-xs font-medium bg-slate-100 px-2 py-1 rounded-full text-slate-600">
-                  {stats.recentContactRequests.length} dernières
-                </span>
-              </div>
-              
-              <div className="p-0">
-                {stats.recentContactRequests.length > 0 ? (
-                  <div className="divide-y divide-slate-100">
-                    {stats.recentContactRequests.map((contact: any) => (
-                      <div key={contact.id} className="p-6 hover:bg-slate-50 transition">
-                        <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                            <User className="w-5 h-5 text-blue-600" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="font-bold text-slate-900">{contact.clientName}</p>
-                                <a href={`tel:${contact.clientPhone}`} className="text-sm text-emerald-600 hover:underline flex items-center gap-1 mt-0.5 font-medium">
-                                  <Phone className="w-3 h-3" />
-                                  {contact.clientPhone}
-                                </a>
-                              </div>
-                              <span className="text-xs text-slate-400 whitespace-nowrap">
-                                {new Date(contact.createdAt).toLocaleDateString("fr-FR", {
-                                  day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
-                                })}
-                              </span>
-                            </div>
-                            {contact.message && (
-                              <div className="mt-3 bg-slate-50 p-3 rounded-lg text-sm text-slate-600 italic border border-slate-100">
-                                "{contact.message}"
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-12 text-center text-slate-500 flex flex-col items-center">
-                    <MessageSquare className="w-12 h-12 text-slate-200 mb-3" />
-                    <p>Aucune demande de contact pour le moment.</p>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* Profile Section */}
-            <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+             {/* Profile Section (Moved UP) */}
+             <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                   <User className="w-5 h-5 text-emerald-600" />
@@ -619,6 +627,145 @@ export default function ArtisanDashboard() {
                 </div>
               </div>
             </section>
+            
+            {/* Activity Section (With Chart & Table) */}
+            <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div className="p-6 border-b border-slate-100 flex flex-wrap gap-4 justify-between items-center">
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-emerald-600" />
+                  Activité des demandes
+                </h2>
+                
+                <div className="flex bg-slate-100 rounded-lg p-1">
+                  {[
+                    { id: "today", label: "Aujourd'hui" },
+                    { id: "week", label: "Semaine" },
+                    { id: "month", label: "Mois" },
+                    { id: "year", label: "Année" }
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      onClick={() => { setFilter(f.id); setPage(1); }}
+                      className={`px-3 py-1 text-xs font-medium rounded-md transition ${
+                        filter === f.id 
+                          ? "bg-white text-emerald-600 shadow-sm" 
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Chart Area */}
+              <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+                <div className="h-[250px] w-full">
+                  {chartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                            <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                        <Tooltip 
+                          contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        />
+                        <Area type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-slate-400 text-sm">
+                      Aucune donnée disponible pour cette période
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Table Area */}
+              <div className="p-0">
+                {requestsLoading ? (
+                  <div className="p-12 text-center">
+                    <Loader2 className="w-8 h-8 animate-spin text-emerald-600 mx-auto" />
+                  </div>
+                ) : contactRequests.length > 0 ? (
+                  <>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm text-left">
+                        <thead className="bg-slate-50 text-slate-500 uppercase font-bold text-xs">
+                          <tr>
+                            <th className="px-6 py-4">Date</th>
+                            <th className="px-6 py-4">Client</th>
+                            <th className="px-6 py-4">Téléphone</th>
+                            <th className="px-6 py-4">Message</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {contactRequests.map((req) => (
+                            <tr key={req.id} className="hover:bg-slate-50 transition">
+                              <td className="px-6 py-4 whitespace-nowrap text-slate-500">
+                                {new Date(req.createdAt).toLocaleDateString("fr-FR", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit"
+                                })}
+                              </td>
+                              <td className="px-6 py-4 font-medium text-slate-900">
+                                {req.clientName}
+                              </td>
+                              <td className="px-6 py-4 font-mono text-slate-600">
+                                {req.clientPhone}
+                              </td>
+                              <td className="px-6 py-4 text-slate-600 italic max-w-[200px] truncate">
+                                {req.message || "—"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    {/* Pagination */}
+                    <div className="flex items-center justify-between px-6 py-4 bg-slate-50 border-t border-slate-200">
+                      <span className="text-xs text-slate-500">
+                        Total: {totalRequests} demandes
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setPage(p => Math.max(1, p - 1))}
+                          disabled={page === 1}
+                          className="p-1 rounded hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition"
+                        >
+                          <ChevronLeft size={20} className="text-slate-600" />
+                        </button>
+                        <span className="text-sm font-medium text-slate-700 px-2 py-0.5">
+                          Page {page} / {totalPages}
+                        </span>
+                        <button
+                          onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                          disabled={page === totalPages}
+                          className="p-1 rounded hover:bg-white disabled:opacity-30 disabled:hover:bg-transparent transition"
+                        >
+                          <ChevronRight size={20} className="text-slate-600" />
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="p-12 text-center text-slate-500 flex flex-col items-center">
+                    <MessageSquare className="w-12 h-12 text-slate-200 mb-3" />
+                    <p>Aucune demande de contact sur cette période.</p>
+                  </div>
+                )}
+              </div>
+            </section>
+
           </div>
 
           {/* --- Sidebar (Right) --- */}
