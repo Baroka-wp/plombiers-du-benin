@@ -104,13 +104,18 @@ export default function MapView({ plumbers }: MapViewProps) {
     }, []);
 
     useEffect(() => {
-        if (!mapRef.current || plumbers.length === 0) return;
+        if (!mapRef.current) return;
 
         // Supprimer les anciens marqueurs
         markersRef.current.forEach((marker) => {
             marker.remove();
         });
         markersRef.current = [];
+
+        if (plumbers.length === 0) {
+            mapRef.current.setView([8.5, 2.3], 7);
+            return;
+        }
 
         // Créer une icône personnalisée
         const createIcon = (isVerified: boolean) => {
@@ -205,4 +210,3 @@ export default function MapView({ plumbers }: MapViewProps) {
         </div>
     );
 }
-

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma db push --skip-generate && prisma generate && next build",
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -15,7 +15,8 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:seed-demo": "node scripts/seed-demo-artisans.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -27,7 +28,7 @@
     "html2canvas": "^1.4.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.554.0",
-    "next": "16.0.4",
+    "next": "16.2.12",
     "next-auth": "^4.24.13",
     "next-cloudinary": "^6.17.5",
     "prisma": "^6.19.0",
@@ -47,7 +48,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.0.4",
+    "eslint-config-next": "16.2.12",
     "prettier": "^3.3.3",
     "tailwindcss": "^4",
     "typescript": "^5"
