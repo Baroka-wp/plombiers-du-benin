@@ -416,6 +416,19 @@ function AnnuairePageContent() {
                             Réessayer
                         </button>
                     </div>
+                ) : filteredPlumbers.length === 0 ? (
+                    <div className="bg-white rounded-xl border border-slate-200 px-6 py-20 text-center">
+                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50">
+                            <MapPin className="h-7 w-7 text-emerald-700" />
+                        </div>
+                        <h2 className="text-xl font-bold text-slate-900">
+                            Aucun artisan disponible pour le moment
+                        </h2>
+                        <p className="mx-auto mt-2 max-w-lg text-slate-600">
+                            Modifiez vos critères de recherche ou revenez bientôt pour découvrir
+                            les plombiers certifiés de votre zone.
+                        </p>
+                    </div>
                 ) : viewMode === 'table' ? (
                     /* Table View */
                     <div className="bg-white rounded-xl shadow-md overflow-hidden border border-slate-200">
@@ -672,7 +685,7 @@ function AnnuairePageContent() {
                 ) : null}
 
                 {/* Pagination */}
-                {!loading && (
+                {!loading && pagination.totalCount > 0 && (
                     <div className="mt-6 px-6 py-4 bg-white rounded-xl border border-slate-200">
                         <div className="flex items-center justify-between">
                             <p className="text-sm text-slate-600">
@@ -730,7 +743,7 @@ function AnnuairePageContent() {
 
                                 <button
                                     onClick={() => handlePageChange(pagination.page + 1)}
-                                    disabled={pagination.page === pagination.totalPages}
+                                    disabled={pagination.page >= pagination.totalPages}
                                     className="px-3 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                 >
                                     <ChevronRight className="w-5 h-5" />
